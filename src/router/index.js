@@ -1,0 +1,71 @@
+import { createRouter, createWebHistory } from 'vue-router'
+
+// Importação das views
+import Dashboard from '../views/Dashboard.vue'
+import TimeEntries from '../views/TimeEntries.vue'
+import Clients from '../views/Clients.vue'
+import Projects from '../views/Projects.vue'
+import Reports from '../views/Reports.vue'
+import GoogleCalendar from '../views/GoogleCalendar.vue'
+import NotFound from '../views/NotFound.vue'
+
+const routes = [
+  {
+    path: '/',
+    redirect: '/dashboard'
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard
+  },
+  {
+    path: '/time-entries',
+    name: 'TimeEntries',
+    component: TimeEntries
+  },
+  {
+    path: '/time-entries/new',
+    name: 'NewTimeEntry',
+    component: TimeEntries,
+    props: { openModal: true }
+  },
+  {
+    path: '/clients',
+    name: 'Clients',
+    component: Clients
+  },
+  {
+    path: '/projects',
+    name: 'Projects',
+    component: Projects
+  },
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: Reports
+  },
+  {
+    path: '/google-calendar',
+    name: 'GoogleCalendar',
+    component: GoogleCalendar
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFound
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+  linkActiveClass: 'active'
+})
+
+// Sem verificação de autenticação
+router.beforeEach((to, from, next) => {
+  next()
+})
+
+export default router
