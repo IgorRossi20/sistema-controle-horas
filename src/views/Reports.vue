@@ -1,10 +1,19 @@
 <template>
   <div class="reports">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Relatórios</h1>
+    <div class="page-header mb-5">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="page-title">Relatórios</h1>
+          <p class="page-subtitle">Gere relatórios detalhados de suas horas trabalhadas</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Ações -->
+    <div class="d-flex justify-content-end mb-4">
       <div class="btn-group">
         <button 
-          class="btn btn-primary" 
+          class="btn btn-primary hover-lift transition-all" 
           @click="generateReport" 
           :disabled="loading || !selectedMonth || !selectedYear"
         >
@@ -35,8 +44,14 @@
     </div>
     
     <!-- Filtros -->
-    <div class="card mb-4">
+    <div class="card modern-card mb-4 animate-fade-in hover-lift transition-all">
       <div class="card-body">
+        <div class="filter-header mb-3">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>
+            Filtros do Relatório
+          </h5>
+        </div>
         <div class="row g-3">
           <div class="col-md-4">
             <label for="month" class="form-label">Mês</label>
@@ -80,7 +95,7 @@
     </div>
     
     <!-- Relatório -->
-    <div class="card">
+    <div class="card modern-card animate-scale-in hover-lift transition-all">
       <div class="card-body">
         <div v-if="loading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
@@ -96,7 +111,20 @@
         
         <div v-else-if="reportData.length && reportGenerated">
           <div class="report-header mb-4">
-            <h2 class="h4 mb-3">Relatório de Horas Trabalhadas</h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h2 class="report-title">Relatório de {{ formatReportPeriod() }}</h2>
+                <p class="report-subtitle">Total de {{ totalHours }} horas trabalhadas</p>
+              </div>
+              <div class="btn-group" role="group">
+                <button @click="exportToPDF" class="btn btn-outline-primary btn-modern">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </button>
+                <button @click="exportToExcel" class="btn btn-outline-success btn-modern">
+                  <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </button>
+              </div>
+            </div>
             <div class="row">
               <div class="col-md-6">
                 <p class="mb-1"><strong>Período:</strong> {{ formatReportPeriod() }}</p>
@@ -106,7 +134,6 @@
               <div class="col-md-6 text-md-end">
                 <p class="mb-1"><strong>Total de Horas:</strong> {{ totalHours }}</p>
                 <p class="mb-1"><strong>Total de Projetos:</strong> {{ uniqueProjects.length }}</p>
-                <p class="mb-1"><strong>Total de Clientes:</strong> {{ uniqueClients.length }}</p>
               </div>
             </div>
           </div>
@@ -123,9 +150,7 @@
                 <table class="table table-sm table-hover">
                   <thead class="table-light">
                     <tr>
-                      <th>Cliente(s)</th>
                       <th>Projeto(s)</th>
-                      <th>Tipo(s)</th>
                       <th>Descrição das Atividades</th>
                       <th class="text-end">Qtd. Registros</th>
                     </tr>
@@ -133,18 +158,8 @@
                   <tbody>
                     <tr>
                       <td>
-                        <span v-for="clientId in Array.from(dayData.clients)" :key="clientId" class="badge bg-secondary me-1">
-                          {{ getClientName(clientId) }}
-                        </span>
-                      </td>
-                      <td>
                         <span v-for="projectId in Array.from(dayData.projects)" :key="projectId" class="badge bg-info me-1">
                           {{ getProjectName(projectId) }}
-                        </span>
-                      </td>
-                      <td>
-                        <span v-for="type in Array.from(dayData.types)" :key="type" class="badge bg-success me-1">
-                          {{ getEntryTypeName(type.type, type.customType) }}
                         </span>
                       </td>
                       <td>
@@ -174,20 +189,14 @@
                 <table class="table table-sm table-hover">
                   <thead class="table-light">
                     <tr>
-                      <th>Cliente</th>
                       <th>Data</th>
-                      <th>Tipo</th>
                       <th>Descrição</th>
                       <th class="text-end">Horas</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="entry in projectData" :key="entry.id">
-                      <td>{{ getClientName(entry.clientId) }}</td>
                       <td>{{ formatDate(entry.date) }}</td>
-                      <td>
-                        <span class="badge bg-success">{{ getEntryTypeName(entry.type, entry.customType) }}</span>
-                      </td>
                       <td>{{ entry.description }}</td>
                       <td class="text-end">{{ entry.hours }}</td>
                     </tr>
@@ -211,14 +220,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
-import { clientsService } from '../services/clients'
 import { exportService } from '../services/export'
 
 const userStore = useUserStore()
 
 // Estado
 const loading = ref(false)
-const clients = ref([])
 const projects = ref([])
 const timeEntries = ref([])
 const reportData = ref([])
@@ -240,19 +247,7 @@ const months = [
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i).sort((a, b) => b - a)
 
-// Lista de tipos de lançamento
-const entryTypes = [
-  { value: 'development', label: 'Desenvolvimento' },
-  { value: 'meeting_internal', label: 'Reunião Interna' },
-  { value: 'meeting_client', label: 'Reunião com Cliente' },
-  { value: 'email_check', label: 'Check de Emails' },
-  { value: 'planning', label: 'Planejamento' },
-  { value: 'testing', label: 'Testes' },
-  { value: 'documentation', label: 'Documentação' },
-  { value: 'support', label: 'Suporte' },
-  { value: 'training', label: 'Treinamento' },
-  { value: 'custom', label: 'Lançamento Avulso' }
-]
+
 
 // Computed properties
 const filteredEntries = computed(() => {
@@ -325,10 +320,7 @@ const uniqueProjects = computed(() => {
   return Array.from(projectIds)
 })
 
-const uniqueClients = computed(() => {
-  const clientIds = new Set(filteredEntries.value.map(entry => entry.clientId))
-  return Array.from(clientIds)
-})
+
 
 const displayData = computed(() => {
   if (selectedReportType.value === 'daily') {
@@ -342,17 +334,13 @@ const displayData = computed(() => {
         dailyData[dateKey] = {
           entries: [],
           totalHours: 0,
-          clients: new Set(),
-          projects: new Set(),
-          types: new Set()
+          projects: new Set()
         }
       }
       
       dailyData[dateKey].entries.push(entry)
       dailyData[dateKey].totalHours += parseFloat(entry.hours)
-      dailyData[dateKey].clients.add(entry.clientId)
       dailyData[dateKey].projects.add(entry.projectId)
-      dailyData[dateKey].types.add({ type: entry.type, customType: entry.customType })
     })
     
     return dailyData
@@ -367,13 +355,9 @@ const loadData = async () => {
   try {
     const userId = userStore.userId
     
-    // Carregar clientes e projetos
-    const [clientsData, projectsData] = await Promise.all([
-      clientsService.getClients(userId),
-      projectsService.getProjects(userId)
-    ])
+    // Carregar projetos
+    const projectsData = await projectsService.getProjects(userId)
     
-    clients.value = clientsData
     projects.value = projectsData
     
     // Definir mês e ano atual como padrão
@@ -434,25 +418,14 @@ const formatReportPeriod = () => {
   return `${month} de ${selectedYear.value}`
 }
 
-const getClientName = (clientId) => {
-  if (!clientId) return 'Sem cliente'
-  const client = clients.value.find(c => c.id === clientId)
-  return client ? client.name : 'Cliente Desconhecido'
-}
+
 
 const getProjectName = (projectId) => {
   const project = projects.value.find(p => p.id === projectId)
   return project ? project.name : 'Projeto Desconhecido'
 }
 
-const getEntryTypeName = (type, customType) => {
-  if (type === 'custom' && customType) {
-    return customType
-  }
-  
-  const entryType = entryTypes.find(t => t.value === type)
-  return entryType ? entryType.label : 'Tipo Desconhecido'
-}
+
 
 const projectTotalHours = (projectId) => {
   const projectEntries = filteredEntries.value.filter(
@@ -484,13 +457,11 @@ const exportToPDF = async () => {
     if (selectedReportType.value === 'daily') {
       formattedData = exportService.formatDailyReport(
         reportData.value,
-        clients.value,
         projects.value
       )
       
       headers = [
         { key: 'data', label: 'Data' },
-        { key: 'cliente', label: 'Cliente(s)' },
         { key: 'projeto', label: 'Projeto(s)' },
         { key: 'descricao', label: 'Descrição' },
         { key: 'horas', label: 'Total Horas' },
@@ -499,12 +470,10 @@ const exportToPDF = async () => {
     } else {
       formattedData = exportService.formatMonthlyReport(
         reportData.value,
-        clients.value,
         projects.value
       )
       
       headers = [
-        { key: 'cliente', label: 'Cliente' },
         { key: 'projeto', label: 'Projeto' },
         { key: 'data', label: 'Data' },
         { key: 'descricao', label: 'Descrição' },
@@ -539,8 +508,8 @@ const exportToExcel = async () => {
     
     // Formatar dados para o relatório baseado no tipo selecionado
     const formattedData = selectedReportType.value === 'daily' 
-      ? exportService.formatDailyReport(reportData.value, clients.value, projects.value)
-      : exportService.formatMonthlyReport(reportData.value, clients.value, projects.value)
+      ? exportService.formatDailyReport(reportData.value, projects.value)
+      : exportService.formatMonthlyReport(reportData.value, projects.value)
     
     // Exportar para Excel
     await exportService.exportToExcel(
@@ -560,12 +529,200 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Page Header */
+.page-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  color: var(--secondary-color);
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Filter Header */
+.filter-header {
+  border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.filter-header .card-title {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Report Header */
+.report-header {
+  border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.report-subtitle {
+  color: var(--secondary-color);
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Modern Button */
+.btn-modern {
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary.btn-modern {
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.btn-primary.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+}
+
+.btn-outline-primary.btn-modern {
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-outline-primary.btn-modern:hover {
+  background: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.btn-outline-success.btn-modern {
+  border: 2px solid #28a745;
+  color: #28a745;
+}
+
+.btn-outline-success.btn-modern:hover {
+  background: #28a745;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Status Badges */
+.badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.bg-primary {
+  background: var(--brand-gradient) !important;
+}
+
+.bg-info {
+  background: linear-gradient(135deg, #17a2b8, #138496) !important;
+}
+
+/* Tables */
+.table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.05);
+}
+
+.table thead th {
+  background: var(--bg-secondary);
+  color: var(--dark-color);
+  font-weight: 600;
+  border: none;
+  padding: 1rem;
+}
+
+.table tbody td {
+  padding: 1rem;
+  border-color: rgba(74, 144, 226, 0.1);
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(74, 144, 226, 0.05);
+}
+
+/* Button Groups */
+.btn-group .btn {
+  border-radius: 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-group .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Animation */
 .reports {
-  animation: fadeIn 0.5s;
+  animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .page-header .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .report-header .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .btn-group {
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    flex: 1;
+  }
 }
 </style>

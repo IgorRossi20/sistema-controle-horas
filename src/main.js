@@ -3,6 +3,23 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+// Configurar locale para português brasileiro e formato 24 horas
+if (typeof navigator !== 'undefined') {
+  // Forçar locale brasileiro
+  Object.defineProperty(navigator, 'language', {
+    get: function() { return 'pt-BR'; },
+    configurable: true
+  });
+  
+  Object.defineProperty(navigator, 'languages', {
+    get: function() { return ['pt-BR', 'pt', 'en']; },
+    configurable: true
+  });
+}
+
+// Configurar formato de hora 24h globalmente
+document.documentElement.setAttribute('lang', 'pt-BR')
+
 // Importando Bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'

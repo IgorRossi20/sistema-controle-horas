@@ -91,27 +91,22 @@ export const exportService = {
   },
   
   // Formatar dados para relatório mensal
-  formatMonthlyReport(timeEntries, clients, projects) {
-    // Agrupar entradas por projeto e cliente
+  formatMonthlyReport(timeEntries, projects) {
+    // Agrupar entradas por projeto
     const groupedEntries = {}
     
     timeEntries.forEach(entry => {
       const projectId = entry.projectId
-      const clientId = entry.clientId
       
       if (!groupedEntries[projectId]) {
-        groupedEntries[projectId] = {}
-      }
-      
-      if (!groupedEntries[projectId][clientId]) {
-        groupedEntries[projectId][clientId] = {
+        groupedEntries[projectId] = {
           entries: [],
           totalHours: 0
         }
       }
       
-      groupedEntries[projectId][clientId].entries.push(entry)
-      groupedEntries[projectId][clientId].totalHours += parseFloat(entry.hours)
+      groupedEntries[projectId].entries.push(entry)
+      groupedEntries[projectId].totalHours += parseFloat(entry.hours)
     })
     
     // Formatar dados para relatório
@@ -120,44 +115,37 @@ export const exportService = {
     Object.keys(groupedEntries).forEach(projectId => {
       const project = projects.find(p => p.id === projectId)
       const projectName = project ? project.name : 'Projeto Desconhecido'
+      const { entries, totalHours } = groupedEntries[projectId]
       
-      Object.keys(groupedEntries[projectId]).forEach(clientId => {
-        const client = clients.find(c => c.id === clientId)
-        const clientName = clientId ? (client ? client.name : 'Cliente Desconhecido') : 'Sem cliente'
-        const { entries, totalHours } = groupedEntries[projectId][clientId]
+      // Adicionar linha de resumo do projeto
+      reportData.push({
+        projeto: projectName,
+        data: '',
+        descricao: `Total de horas: ${totalHours.toFixed(2)}`,
+        horas: totalHours.toFixed(2),
+        tipo: 'resumo'
+      })
+      
+      // Adicionar entradas detalhadas
+      entries.forEach(entry => {
+        let formattedDate
+        if (entry.date instanceof Date) {
+          formattedDate = entry.date.toLocaleDateString('pt-BR')
+        } else if (typeof entry.date === 'string') {
+          formattedDate = new Date(entry.date).toLocaleDateString('pt-BR')
+        } else if (entry.date && entry.date.seconds) {
+          formattedDate = new Date(entry.date.seconds * 1000).toLocaleDateString('pt-BR')
+        } else {
+          const d = new Date(entry.date)
+          formattedDate = isNaN(d.getTime()) ? 'Data inválida' : d.toLocaleDateString('pt-BR')
+        }
         
-        // Adicionar linha de resumo do projeto
         reportData.push({
           projeto: projectName,
-          cliente: clientName,
-          data: '',
-          descricao: `Total de horas: ${totalHours.toFixed(2)}`,
-          horas: totalHours.toFixed(2),
-          tipo: 'resumo'
-        })
-        
-        // Adicionar entradas detalhadas
-        entries.forEach(entry => {
-          let formattedDate
-          if (entry.date instanceof Date) {
-            formattedDate = entry.date.toLocaleDateString('pt-BR')
-          } else if (typeof entry.date === 'string') {
-            formattedDate = new Date(entry.date).toLocaleDateString('pt-BR')
-          } else if (entry.date && entry.date.seconds) {
-            formattedDate = new Date(entry.date.seconds * 1000).toLocaleDateString('pt-BR')
-          } else {
-            const d = new Date(entry.date)
-            formattedDate = isNaN(d.getTime()) ? 'Data inválida' : d.toLocaleDateString('pt-BR')
-          }
-          
-          reportData.push({
-            projeto: projectName,
-            cliente: clientName,
-            data: formattedDate,
-            descricao: entry.description,
-            horas: parseFloat(entry.hours).toFixed(2),
-            tipo: 'detalhe'
-          })
+          data: formattedDate,
+          descricao: entry.description,
+          horas: parseFloat(entry.hours).toFixed(2),
+          tipo: 'detalhe'
         })
       })
     })
@@ -166,7 +154,7 @@ export const exportService = {
   },
 
   // Formatar dados para relatório resumido por dia
-  formatDailyReport(timeEntries, clients, projects) {
+  formatDailyReport(timeEntries, projects) {
     // Agrupar entradas por data
     const groupedByDate = {}
     
@@ -187,14 +175,12 @@ export const exportService = {
         groupedByDate[formattedDate] = {
           entries: [],
           totalHours: 0,
-          clients: new Set(),
           projects: new Set()
         }
       }
       
       groupedByDate[formattedDate].entries.push(entry)
       groupedByDate[formattedDate].totalHours += parseFloat(entry.hours)
-      groupedByDate[formattedDate].clients.add(entry.clientId)
       groupedByDate[formattedDate].projects.add(entry.projectId)
     })
     
@@ -217,13 +203,6 @@ export const exportService = {
         return project ? project.name : 'Projeto Desconhecido'
       }).join(', ')
       
-      // Obter nomes dos clientes únicos do dia
-      const clientNames = Array.from(dayData.clients).map(clientId => {
-        if (!clientId) return 'Sem cliente'
-        const client = clients.find(c => c.id === clientId)
-        return client ? client.name : 'Cliente Desconhecido'
-      }).join(', ')
-      
       // Criar descrição resumida das atividades
       const descriptions = dayData.entries.map(entry => entry.description).filter(desc => desc && desc.trim())
       const uniqueDescriptions = [...new Set(descriptions)]
@@ -234,7 +213,6 @@ export const exportService = {
       reportData.push({
         data: date,
         projeto: projectNames,
-        cliente: clientNames,
         descricao: resumedDescription,
         horas: dayData.totalHours.toFixed(2),
         quantidade_registros: dayData.entries.length,

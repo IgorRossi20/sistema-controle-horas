@@ -3,10 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Importação das views
 import Dashboard from '../views/Dashboard.vue'
 import TimeEntries from '../views/TimeEntries.vue'
-import Clients from '../views/Clients.vue'
 import Projects from '../views/Projects.vue'
 import Reports from '../views/Reports.vue'
-import GoogleCalendar from '../views/GoogleCalendar.vue'
 import NotFound from '../views/NotFound.vue'
 
 const routes = [
@@ -30,11 +28,7 @@ const routes = [
     component: TimeEntries,
     props: { openModal: true }
   },
-  {
-    path: '/clients',
-    name: 'Clients',
-    component: Clients
-  },
+
   {
     path: '/projects',
     name: 'Projects',
@@ -45,11 +39,7 @@ const routes = [
     name: 'Reports',
     component: Reports
   },
-  {
-    path: '/google-calendar',
-    name: 'GoogleCalendar',
-    component: GoogleCalendar
-  },
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

@@ -25,108 +25,6 @@ const simulateNetworkDelay = () => {
   return new Promise(resolve => setTimeout(resolve, Math.random() * 100))
 }
 
-// Serviço para clientes
-export const clientsService = {
-  // Adicionar um novo cliente
-  async addClient(client, userId) {
-    try {
-      await simulateNetworkDelay()
-      
-      const clientData = {
-        ...client,
-        userId,
-        createdAt: serverTimestamp()
-      }
-      
-      const newClient = localStorageService.addDocument('clients', clientData)
-      
-      // Registra evento de criação de cliente
-      safeLogEvent(mockAnalytics, 'create_item', {
-        content_type: 'client',
-        item_id: newClient.id
-      })
-      
-      return newClient
-    } catch (error) {
-      console.error('Erro ao adicionar cliente:', error)
-      throw error
-    }
-  },
-
-  // Obter todos os clientes do usuário
-  async getClients(userId) {
-    try {
-      await simulateNetworkDelay()
-      
-      const clients = localStorageService.queryDocuments('clients', 
-        client => client.userId === userId
-      )
-      
-      // Ordenar por data de criação (mais recente primeiro)
-      return clients.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    } catch (error) {
-      console.error('Erro ao obter clientes:', error)
-      throw error
-    }
-  },
-
-  // Obter um cliente específico
-  async getClient(clientId) {
-    try {
-      await simulateNetworkDelay()
-      
-      const client = localStorageService.getDocument('clients', clientId)
-      if (client) {
-        return client
-      } else {
-        throw new Error('Cliente não encontrado')
-      }
-    } catch (error) {
-      console.error('Erro ao obter cliente:', error)
-      throw error
-    }
-  },
-
-  // Atualizar um cliente
-  async updateClient(clientId, clientData) {
-    try {
-      await simulateNetworkDelay()
-      
-      const updatedClient = localStorageService.updateDocument('clients', clientId, clientData)
-      
-      // Registra evento de atualização de cliente
-      safeLogEvent(mockAnalytics, 'update_item', {
-        content_type: 'client',
-        item_id: clientId
-      })
-      
-      return updatedClient
-    } catch (error) {
-      console.error('Erro ao atualizar cliente:', error)
-      throw error
-    }
-  },
-
-  // Excluir um cliente
-  async deleteClient(clientId) {
-    try {
-      await simulateNetworkDelay()
-      
-      localStorageService.deleteDocument('clients', clientId)
-      
-      // Registra evento de exclusão de cliente
-      safeLogEvent(mockAnalytics, 'delete_item', {
-        content_type: 'client',
-        item_id: clientId
-      })
-      
-      return clientId
-    } catch (error) {
-      console.error('Erro ao excluir cliente:', error)
-      throw error
-    }
-  }
-}
 
 // Serviço para projetos
 export const projectsService = {
@@ -146,8 +44,7 @@ export const projectsService = {
       // Registra evento de criação de projeto
       safeLogEvent(mockAnalytics, 'create_item', {
         content_type: 'project',
-        item_id: newProject.id,
-        client_id: project.clientId || 'none'
+        item_id: newProject.id
       })
       
       return newProject
@@ -174,22 +71,7 @@ export const projectsService = {
     }
   },
 
-  // Obter projetos por cliente
-  async getProjectsByClient(clientId, userId) {
-    try {
-      await simulateNetworkDelay()
-      
-      const projects = localStorageService.queryDocuments('projects', 
-        project => project.clientId === clientId && project.userId === userId
-      )
-      
-      // Ordenar por data de criação (mais recente primeiro)
-      return projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    } catch (error) {
-      console.error('Erro ao obter projetos por cliente:', error)
-      throw error
-    }
-  },
+
 
   // Obter um projeto específico
   async getProject(projectId) {
@@ -218,8 +100,7 @@ export const projectsService = {
       // Registra evento de atualização de projeto
       safeLogEvent(mockAnalytics, 'update_item', {
         content_type: 'project',
-        item_id: projectId,
-        client_id: projectData.clientId || 'none'
+        item_id: projectId
       })
       
       return updatedProject
@@ -271,7 +152,6 @@ export const timeEntriesService = {
         content_type: 'time_entry',
         item_id: newTimeEntry.id,
         project_id: timeEntry.projectId || 'none',
-        client_id: timeEntry.clientId || 'none',
         duration_minutes: timeEntry.durationMinutes || 0
       })
       
@@ -381,22 +261,7 @@ export const timeEntriesService = {
     }
   },
 
-  // Obter registros de tempo por cliente
-  async getTimeEntriesByClient(userId, clientId) {
-    try {
-      await simulateNetworkDelay()
-      
-      const timeEntries = localStorageService.queryDocuments('timeEntries', 
-        entry => entry.userId === userId && entry.clientId === clientId
-      )
-      
-      // Ordenar por data (mais recente primeiro)
-      return timeEntries.sort((a, b) => new Date(b.date) - new Date(a.date))
-    } catch (error) {
-      console.error('Erro ao obter registros de tempo por cliente:', error)
-      throw error
-    }
-  },
+
 
   // Obter um registro de tempo específico
   async getTimeEntry(timeEntryId) {
@@ -432,7 +297,6 @@ export const timeEntriesService = {
         content_type: 'time_entry',
         item_id: timeEntryId,
         project_id: timeEntryData.projectId || 'none',
-        client_id: timeEntryData.clientId || 'none',
         duration_minutes: timeEntryData.durationMinutes || 0
       })
       

@@ -1,15 +1,26 @@
 <template>
   <div class="time-entries">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Registros de Horas</h1>
-      <button class="btn btn-primary" @click="showAddModal = true">
-        <i class="bi bi-plus-circle me-2"></i> Novo Registro
-      </button>
+    <div class="page-header mb-5">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="page-title">Registros de Horas</h1>
+          <p class="page-subtitle">Gerencie seus registros de tempo</p>
+        </div>
+        <button class="btn btn-primary btn-modern hover-lift transition-all" @click="showAddModal = true">
+          <i class="bi bi-plus-circle me-2"></i> Novo Registro
+        </button>
+      </div>
     </div>
     
     <!-- Filtros -->
-    <div class="card mb-4">
+    <div class="card modern-card mb-4 animate-fade-in hover-lift transition-all">
       <div class="card-body">
+        <div class="filter-header mb-3">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>
+            Filtros
+          </h5>
+        </div>
         <div class="row g-3">
           <div class="col-md-4">
             <label for="month" class="form-label">Mês</label>
@@ -20,21 +31,11 @@
             </select>
           </div>
           
-          <div class="col-md-4">
-            <label for="client" class="form-label">Cliente</label>
-            <select id="client" v-model="filters.clientId" class="form-select">
-              <option value="">Todos os clientes</option>
-              <option v-for="client in clients" :key="client.id" :value="client.id">
-                {{ client.name }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="col-md-4">
+          <div class="col-md-8">
             <label for="project" class="form-label">Projeto</label>
             <select id="project" v-model="filters.projectId" class="form-select">
               <option value="">Todos os projetos</option>
-              <option v-for="project in filteredProjects" :key="project.id" :value="project.id">
+              <option v-for="project in projects" :key="project.id" :value="project.id">
                 {{ project.name }}
               </option>
             </select>
@@ -44,7 +45,7 @@
     </div>
     
     <!-- Tabela de registros -->
-    <div class="card">
+    <div class="card modern-card animate-fade-in hover-lift transition-all">
       <div class="card-body">
         <div v-if="loading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
@@ -63,34 +64,35 @@
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Cliente</th>
-                  <th>Projeto</th>
-                  <th>Tipo</th>
-                  <th>Descrição</th>
-                  <th>Horas</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
+              <tr>
+                <th>Data</th>
+                <th>Projeto</th>
+                <th>Horário</th>
+                <th>Horas</th>
+                <th>Descrição</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
               <tbody>
                 <tr v-for="entry in filteredEntries" :key="entry.id">
                   <td>{{ formatDate(entry.date) }}</td>
-                  <td>{{ getClientName(entry.clientId) }}</td>
                   <td>{{ getProjectName(entry.projectId) }}</td>
                   <td>
-                    <span class="badge bg-secondary">{{ getEntryTypeName(entry.type, entry.customType) }}</span>
-                  </td>
-                  <td class="text-truncate-2" style="max-width: 250px;">
+                      <span v-if="entry.startTime && entry.endTime" class="text-muted small">
+                        {{ formatTime(entry.startTime) }} às {{ formatTime(entry.endTime) }}
+                      </span>
+                      <span v-else class="text-muted small">-</span>
+                    </td>
+                  <td>{{ entry.hours }}h</td>
+                  <td class="text-truncate-2" style="max-width: 350px;">
                     {{ entry.description }}
                   </td>
-                  <td>{{ entry.hours }}</td>
                   <td>
                     <div class="btn-group">
-                      <button class="btn btn-sm btn-outline-primary" @click="editEntry(entry)">
+                      <button class="btn btn-sm btn-outline-primary transition-all hover-scale" @click="editEntry(entry)">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(entry)">
+                      <button class="btn btn-sm btn-outline-danger transition-all hover-scale" @click="confirmDelete(entry)">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -99,7 +101,7 @@
               </tbody>
               <tfoot>
                 <tr class="table-light fw-bold">
-                  <td colspan="5" class="text-end">Total de Horas:</td>
+                  <td colspan="3" class="text-end">Total de Horas:</td>
                   <td>{{ totalHours }}</td>
                   <td></td>
                 </tr>
@@ -113,7 +115,7 @@
     <!-- Modal para adicionar/editar registro -->
     <div class="modal fade" :class="{ 'show d-block': showAddModal }" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
             <h5 class="modal-title">{{ isEditing ? 'Editar Registro' : 'Novo Registro' }}</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
@@ -132,21 +134,6 @@
               </div>
               
               <div class="mb-3">
-                <label for="entry-client" class="form-label">Cliente <span class="text-muted">(opcional)</span></label>
-                <select 
-                  id="entry-client" 
-                  v-model="entryForm.clientId" 
-                  class="form-select" 
-                  @change="updateProjectOptions"
-                >
-                  <option value="">Nenhum cliente específico</option>
-                  <option v-for="client in clients" :key="client.id" :value="client.id">
-                    {{ client.name }}
-                  </option>
-                </select>
-              </div>
-              
-              <div class="mb-3">
                 <label for="entry-project" class="form-label">Projeto</label>
                 <select 
                   id="entry-project" 
@@ -155,53 +142,53 @@
                   required
                 >
                   <option value="" disabled>Selecione um projeto</option>
-                  <option v-for="project in availableProjects" :key="project.id" :value="project.id">
+                  <option v-for="project in projects" :key="project.id" :value="project.id">
                     {{ project.name }}
                   </option>
                 </select>
               </div>
               
-              <div class="mb-3">
-                <label for="entry-type" class="form-label">Tipo de Lançamento</label>
-                <select 
-                  id="entry-type" 
-                  v-model="entryForm.type" 
-                  class="form-select" 
-                  @change="onTypeChange"
-                  required
-                >
-                  <option value="" disabled>Selecione o tipo</option>
-                  <option v-for="type in entryTypes" :key="type.value" :value="type.value">
-                    {{ type.label }}
-                  </option>
-                  <option value="custom">Lançamento Avulso (Personalizado)</option>
-                </select>
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="entry-start-time" class="form-label">Horário de Início (HH:MM)</label>
+                  <input 
+                    type="text" 
+                    id="entry-start-time" 
+                    v-model="entryForm.startTime" 
+                    class="form-control time-input" 
+                    required
+                    @input="formatTimeInput($event, 'startTime')"
+                    @blur="validateTimeInput($event, 'startTime')"
+                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                    title="Formato: HH:MM (00:00 até 23:59)"
+                    placeholder="00:00"
+                    maxlength="5"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="entry-end-time" class="form-label">Horário de Fim (HH:MM)</label>
+                  <input 
+                    type="text" 
+                    id="entry-end-time" 
+                    v-model="entryForm.endTime" 
+                    class="form-control time-input" 
+                    required
+                    @input="formatTimeInput($event, 'endTime')"
+                    @blur="validateTimeInput($event, 'endTime')"
+                    pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$"
+                    title="Formato: HH:MM (00:00 até 23:59)"
+                    placeholder="00:00"
+                    maxlength="5"
+                  />
+                </div>
               </div>
               
-              <div v-if="entryForm.type === 'custom'" class="mb-3">
-                <label for="entry-custom-type" class="form-label">Descrição do Lançamento Avulso</label>
-                <input 
-                  type="text" 
-                  id="entry-custom-type" 
-                  v-model="entryForm.customType" 
-                  class="form-control" 
-                  placeholder="Ex: Reunião com cliente ABC, Análise de requisitos, etc."
-                  required
-                />
-              </div>
-              
               <div class="mb-3">
-                <label for="entry-hours" class="form-label">Horas</label>
-                <input 
-                  type="number" 
-                  id="entry-hours" 
-                  v-model="entryForm.hours" 
-                  class="form-control" 
-                  step="0.25" 
-                  min="0.25" 
-                  max="24" 
-                  required
-                />
+                <label class="form-label">Total de Horas</label>
+                <div class="form-control-plaintext fw-bold text-primary">
+                  {{ calculatedHours }} horas
+                </div>
+                <input type="hidden" v-model="entryForm.hours" />
               </div>
               
               <div class="mb-3">
@@ -216,7 +203,7 @@
               </div>
               
               <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary" :disabled="formLoading">
+                <button type="submit" class="btn btn-primary transition-all hover-scale" :disabled="formLoading">
                   <span v-if="formLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   {{ isEditing ? 'Atualizar' : 'Salvar' }}
                 </button>
@@ -228,6 +215,8 @@
     </div>
     <div class="modal-backdrop fade show" v-if="showAddModal"></div>
     
+
+
     <!-- Modal de confirmação de exclusão -->
     <div class="modal fade" :class="{ 'show d-block': showDeleteModal }" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-sm">
@@ -240,8 +229,8 @@
             <p>Tem certeza que deseja excluir este registro?</p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showDeleteModal = false">Cancelar</button>
-            <button type="button" class="btn btn-danger" @click="deleteEntry" :disabled="formLoading">
+            <button type="button" class="btn btn-secondary transition-all hover-scale" @click="showDeleteModal = false">Cancelar</button>
+            <button type="button" class="btn btn-danger transition-all hover-scale" @click="deleteEntry" :disabled="formLoading">
               <span v-if="formLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
               Excluir
             </button>
@@ -250,15 +239,87 @@
       </div>
     </div>
     <div class="modal-backdrop fade show" v-if="showDeleteModal"></div>
+
   </div>
 </template>
 
+<style scoped>
+.time-24h::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.time-24h {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  color-scheme: light;
+}
+
+.time-24h::-webkit-inner-spin-button,
+.time-24h::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Forçar formato 24 horas globalmente */
+input[type="time"] {
+  color-scheme: light;
+}
+
+/* Configurações específicas para navegadores */
+:root {
+  --time-format: 24;
+}
+
+/* Webkit específico para formato 24h */
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field {
+  color-scheme: light;
+}
+
+/* Firefox específico */
+input[type="time"] {
+  -moz-appearance: textfield;
+}
+
+/* Edge/IE específico */
+input[type="time"]::-ms-clear {
+  display: none;
+}
+
+/* Estilos para campos de entrada de tempo customizados */
+.time-input {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 1px;
+  background-color: #f8f9fa;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.time-input:focus {
+  background-color: #fff;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+  outline: none;
+}
+
+.time-input:valid {
+  border-color: #28a745;
+}
+
+.time-input:invalid {
+  border-color: #dc3545;
+}
+</style>
+
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
-import { clientsService } from '../services/clients'
+
+
 
 // Props
 const props = defineProps({
@@ -274,7 +335,6 @@ const userStore = useUserStore()
 const loading = ref(true)
 const formLoading = ref(false)
 const timeEntries = ref([])
-const clients = ref([])
 const projects = ref([])
 const showAddModal = ref(false)
 const showDeleteModal = ref(false)
@@ -287,24 +347,11 @@ const months = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ]
 
-// Tipos de lançamento predefinidos
-const entryTypes = [
-  { value: 'development', label: 'Desenvolvimento' },
-  { value: 'meeting_internal', label: 'Reunião Interna' },
-  { value: 'meeting_client', label: 'Reunião com Cliente' },
-  { value: 'email_check', label: 'Check de Emails' },
-  { value: 'planning', label: 'Planejamento' },
-  { value: 'testing', label: 'Testes' },
-  { value: 'documentation', label: 'Documentação' },
-  { value: 'support', label: 'Suporte' },
-  { value: 'training', label: 'Treinamento' },
-  { value: 'analysis', label: 'Análise' }
-]
+
 
 // Filtros
 const filters = ref({
   month: new Date().getMonth(),
-  clientId: '',
   projectId: ''
 })
 
@@ -312,10 +359,9 @@ const filters = ref({
 const resetForm = () => {
   return {
     date: new Date().toISOString().split('T')[0],
-    clientId: '',
     projectId: '',
-    type: '',
-    customType: '',
+    startTime: '',
+    endTime: '',
     hours: '',
     description: ''
   }
@@ -343,11 +389,6 @@ const filteredEntries = computed(() => {
     
     return entryDate.getMonth() === filters.value.month
   })
-  
-  // Filtrar por cliente
-  if (filters.value.clientId) {
-    result = result.filter(entry => entry.clientId === filters.value.clientId)
-  }
   
   // Filtrar por projeto
   if (filters.value.projectId) {
@@ -390,38 +431,47 @@ const totalHours = computed(() => {
   return total.toFixed(2)
 })
 
-const filteredProjects = computed(() => {
-  if (!filters.value.clientId) {
-    return projects.value
+const calculatedHours = computed(() => {
+  if (!entryForm.value.startTime || !entryForm.value.endTime) {
+    return '0.00'
   }
   
-  return projects.value.filter(project => project.clientId === filters.value.clientId)
+  const start = new Date(`2000-01-01T${entryForm.value.startTime}:00`)
+  const end = new Date(`2000-01-01T${entryForm.value.endTime}:00`)
+  
+  // Se o horário de fim for menor que o de início, assumir que passou da meia-noite
+  if (end < start) {
+    end.setDate(end.getDate() + 1)
+  }
+  
+  const diffMs = end - start
+  const diffHours = diffMs / (1000 * 60 * 60)
+  
+  return diffHours.toFixed(2)
 })
 
-const availableProjects = computed(() => {
-  if (!entryForm.value.clientId) {
-    return projects.value
-  }
-  
-  return projects.value.filter(project => project.clientId === entryForm.value.clientId)
-})
+
 
 // Métodos
+const calculateHours = () => {
+  if (entryForm.value.startTime && entryForm.value.endTime) {
+    entryForm.value.hours = calculatedHours.value
+  }
+}
+
 const loadData = async () => {
   loading.value = true
   
   try {
     const userId = userStore.userId
     
-    // Carregar projetos, clientes e registros de tempo
-    const [projectsData, clientsData, timeEntriesData] = await Promise.all([
+    // Carregar projetos e registros de tempo
+    const [projectsData, timeEntriesData] = await Promise.all([
       projectsService.getProjects(userId),
-      clientsService.getClients(userId),
       timeEntriesService.getTimeEntries(userId)
     ])
     
     projects.value = projectsData
-    clients.value = clientsData
     timeEntries.value = timeEntriesData
   } catch (error) {
     console.error('Erro ao carregar dados:', error)
@@ -450,20 +500,87 @@ const formatDate = (date) => {
   return d.toLocaleDateString('pt-BR')
 }
 
-const getClientName = (clientId) => {
-  if (!clientId) return 'Sem cliente'
-  const client = clients.value.find(c => c.id === clientId)
-  return client ? client.name : 'Cliente Desconhecido'
+const formatTime = (time) => {
+  if (!time) return ''
+  
+  // Se já está no formato HH:MM, retorna como está
+  if (time.includes(':')) {
+    const [hours, minutes] = time.split(':')
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+  }
+  
+  return time
+}
+
+const convertTo24Hour = (time12h) => {
+  if (!time12h) return null
+  
+  const [time, modifier] = time12h.split(' ')
+  let [hours, minutes] = time.split(':')
+  
+  if (hours === '12') {
+    hours = '00'
+  }
+  
+  if (modifier === 'PM') {
+    hours = parseInt(hours, 10) + 12
+  }
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes}`
+}
+
+const formatTimeInput = (event, field) => {
+  let value = event.target.value.replace(/[^0-9]/g, '')
+  
+  if (value.length >= 3) {
+    value = value.substring(0, 2) + ':' + value.substring(2, 4)
+  }
+  
+  event.target.value = value
+  entryForm.value[field] = value
+  
+  // Calcular horas automaticamente se ambos os campos estiverem preenchidos
+  if (entryForm.value.startTime && entryForm.value.endTime) {
+    calculateHours()
+  }
+}
+
+const validateTimeInput = (event, field) => {
+  const value = event.target.value
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+  
+  if (value && !timeRegex.test(value)) {
+    // Se não estiver no formato correto, tentar corrigir
+    const numbers = value.replace(/[^0-9]/g, '')
+    if (numbers.length >= 3) {
+      let hours = numbers.substring(0, 2)
+      let minutes = numbers.substring(2, 4)
+      
+      // Validar horas (00-23)
+      if (parseInt(hours) > 23) {
+        hours = '23'
+      }
+      
+      // Validar minutos (00-59)
+      if (parseInt(minutes) > 59) {
+        minutes = '59'
+      }
+      
+      const correctedValue = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+      event.target.value = correctedValue
+      entryForm.value[field] = correctedValue
+    }
+  }
+  
+  // Calcular horas após validação
+  if (entryForm.value.startTime && entryForm.value.endTime) {
+    calculateHours()
+  }
 }
 
 const getProjectName = (projectId) => {
   const project = projects.value.find(p => p.id === projectId)
   return project ? project.name : 'Projeto Desconhecido'
-}
-
-const updateProjectOptions = () => {
-  // Resetar o projeto selecionado quando o cliente muda
-  entryForm.value.projectId = ''
 }
 
 const closeModal = () => {
@@ -490,10 +607,9 @@ const editEntry = (entry) => {
   
   entryForm.value = {
     date: entryDate.toISOString().split('T')[0],
-    clientId: entry.clientId,
     projectId: entry.projectId,
-    type: entry.type || '',
-    customType: entry.customType || '',
+    startTime: entry.startTime || '',
+    endTime: entry.endTime || '',
     hours: entry.hours,
     description: entry.description
   }
@@ -510,10 +626,32 @@ const saveEntry = async () => {
   formLoading.value = true
   
   try {
+    // Validação básica
+    if (!entryForm.value.date || !entryForm.value.projectId || !entryForm.value.startTime || !entryForm.value.endTime) {
+      alert('Por favor, preencha todos os campos obrigatórios.')
+      return
+    }
+    
+    // Validação de horários
+    const start = new Date(`2000-01-01T${entryForm.value.startTime}:00`)
+    const end = new Date(`2000-01-01T${entryForm.value.endTime}:00`)
+    
+    if (end <= start && entryForm.value.endTime <= entryForm.value.startTime) {
+      alert('O horário de fim deve ser posterior ao horário de início.')
+      return
+    }
+    
+    if (parseFloat(entryForm.value.hours) <= 0) {
+      alert('O total de horas deve ser maior que zero.')
+      return
+    }
+    
     const userId = userStore.userId
     const formData = {
       ...entryForm.value,
       date: new Date(entryForm.value.date),
+      startTime: entryForm.value.startTime,
+      endTime: entryForm.value.endTime,
       hours: parseFloat(entryForm.value.hours).toFixed(2)
     }
     
@@ -562,27 +700,9 @@ const deleteEntry = async () => {
   }
 }
 
-const onTypeChange = () => {
-  // Limpar o campo customType quando não for tipo personalizado
-  if (entryForm.value.type !== 'custom') {
-    entryForm.value.customType = ''
-  }
-}
 
-const getEntryTypeName = (type, customType) => {
-  if (type === 'custom') {
-    return customType || 'Personalizado'
-  }
-  
-  const typeObj = entryTypes.find(t => t.value === type)
-  return typeObj ? typeObj.label : 'Não definido'
-}
 
-// Watchers
-watch(() => filters.value.clientId, () => {
-  // Resetar o filtro de projeto quando o cliente muda
-  filters.value.projectId = ''
-})
+
 
 onMounted(async () => {
   await loadData()
@@ -591,12 +711,217 @@ onMounted(async () => {
   if (props.openModal) {
     showAddModal.value = true
   }
+  
+  // Configurar formato 24 horas globalmente
+  document.documentElement.setAttribute('lang', 'pt-BR')
+  
+  // Aguardar um pouco para garantir que os elementos estejam renderizados
+  setTimeout(() => {
+    const timeInputs = document.querySelectorAll('input[type="time"]')
+    timeInputs.forEach(input => {
+      // Configurações para forçar formato 24h
+      input.setAttribute('data-format', '24')
+      input.setAttribute('lang', 'pt-BR')
+      
+      // Interceptar o showPicker para configurar o locale
+      if (input.showPicker) {
+        const originalShowPicker = input.showPicker
+        input.showPicker = function() {
+          // Configurar locale antes de abrir o picker
+          document.documentElement.setAttribute('lang', 'pt-BR')
+          document.body.setAttribute('lang', 'pt-BR')
+          
+          // Tentar forçar formato 24h via CSS
+          const style = document.createElement('style')
+          style.textContent = `
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              background: none;
+            }
+            input[type="time"] {
+              color-scheme: light;
+            }
+          `
+          document.head.appendChild(style)
+          
+          return originalShowPicker.call(this)
+        }
+      }
+      
+      // Adicionar event listener para validar formato
+      input.addEventListener('input', function(e) {
+        const value = e.target.value
+        if (value && value.includes('AM') || value.includes('PM')) {
+          // Se detectar AM/PM, converter para 24h
+          const time24 = convertTo24Hour(value)
+          if (time24) {
+            e.target.value = time24
+          }
+        }
+      })
+    })
+  }, 100)
+  
+  // Listener para atualizações de registros de tempo
+  window.addEventListener('timeEntriesUpdated', loadData)
+})
+
+onUnmounted(() => {
+  // Remover listener
+  window.removeEventListener('timeEntriesUpdated', loadData)
 })
 </script>
 
 <style scoped>
+/* Page Header */
+.page-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  color: var(--secondary-color);
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Filter Header */
+.filter-header {
+  border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.filter-header .card-title {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Modern Button */
+.btn-modern {
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+}
+
+/* Modern Modal */
+.modern-modal {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(30, 58, 95, 0.2);
+  overflow: hidden;
+}
+
+.modern-modal .modal-header {
+  background: var(--brand-gradient);
+  color: white;
+  border: none;
+  padding: 1.5rem;
+}
+
+.modern-modal .modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.modern-modal .btn-close {
+  filter: invert(1);
+}
+
+.modern-modal .modal-body {
+  padding: 2rem;
+}
+
+.modern-modal .modal-footer {
+  border: none;
+  padding: 1.5rem 2rem;
+  background-color: rgba(248, 249, 250, 0.8);
+}
+
+/* Table Enhancements */
+.table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(74, 144, 226, 0.05);
+  transform: scale(1.005);
+}
+
+.table tfoot tr {
+  background: var(--brand-gradient) !important;
+  color: white;
+}
+
+.table tfoot td {
+  font-weight: 600;
+  border: none;
+}
+
+/* Button Groups */
+.btn-group .btn {
+  border-radius: 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Text Truncate */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+/* Modal Backdrop */
 .modal {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(30, 58, 95, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .page-header .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .btn-modern {
+    width: 100%;
+  }
+  
+  .modern-modal .modal-body {
+    padding: 1.5rem;
+  }
 }
 
 .time-entries {

@@ -1,26 +1,27 @@
 <template>
   <div class="projects">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Projetos</h1>
-      <button class="btn btn-primary" @click="showAddModal = true">
-        <i class="bi bi-plus-circle me-2"></i> Novo Projeto
-      </button>
+    <div class="page-header mb-5">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="page-title">Projetos</h1>
+          <p class="page-subtitle">Gerencie seus projetos e clientes</p>
+        </div>
+        <button class="btn btn-primary btn-modern hover-lift transition-all" @click="showAddModal = true">
+          <i class="bi bi-plus-circle me-2"></i> Novo Projeto
+        </button>
+      </div>
     </div>
     
     <!-- Filtros -->
-    <div class="card mb-4">
+    <div class="card modern-card mb-4 animate-fade-in hover-lift transition-all">
       <div class="card-body">
+        <div class="filter-header mb-3">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-funnel me-2"></i>
+            Filtros
+          </h5>
+        </div>
         <div class="row g-3">
-          <div class="col-md-6">
-            <label for="client-filter" class="form-label">Filtrar por Cliente</label>
-            <select id="client-filter" v-model="clientFilter" class="form-select">
-              <option value="">Todos os clientes</option>
-              <option v-for="client in clients" :key="client.id" :value="client.id">
-                {{ client.name }}
-              </option>
-            </select>
-          </div>
-          
           <div class="col-md-6">
             <label for="status-filter" class="form-label">Status</label>
             <select id="status-filter" v-model="statusFilter" class="form-select">
@@ -35,7 +36,7 @@
     </div>
     
     <!-- Lista de projetos -->
-    <div class="card">
+    <div class="card modern-card animate-fade-in hover-lift transition-all">
       <div class="card-body">
         <div v-if="loading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
@@ -56,7 +57,6 @@
               <thead>
                 <tr>
                   <th>Nome</th>
-                  <th>Cliente</th>
                   <th>Status</th>
                   <th>Horas Registradas</th>
                   <th>Ações</th>
@@ -65,7 +65,6 @@
               <tbody>
                 <tr v-for="project in filteredProjects" :key="project.id">
                   <td>{{ project.name }}</td>
-                  <td>{{ getClientName(project.clientId) }}</td>
                   <td>
                     <span :class="getStatusBadgeClass(project.status)">
                       {{ getStatusLabel(project.status) }}
@@ -76,11 +75,11 @@
                   </td>
                   <td>
                     <div class="btn-group">
-                      <button class="btn btn-sm btn-outline-primary" @click="editProject(project)">
+                      <button class="btn btn-sm btn-outline-primary transition-all hover-scale" @click="editProject(project)">
                         <i class="bi bi-pencil"></i>
                       </button>
                       <button 
-                        class="btn btn-sm btn-outline-danger" 
+                        class="btn btn-sm btn-outline-danger transition-all hover-scale" 
                         @click="confirmDelete(project)"
                         :disabled="hasTimeEntries(project.id)"
                         :title="hasTimeEntries(project.id) ? 'Projeto possui horas registradas' : 'Excluir projeto'"
@@ -100,7 +99,7 @@
     <!-- Modal para adicionar/editar projeto -->
     <div class="modal fade" :class="{ 'show d-block': showAddModal }" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
             <h5 class="modal-title">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
@@ -118,21 +117,7 @@
                 />
               </div>
               
-              <div class="mb-3">
-                <label for="project-client" class="form-label">Cliente</label>
-                <select 
-                  id="project-client" 
-                  v-model="projectForm.clientId" 
-                  class="form-select" 
-                  required
-                >
-                  <option value="" disabled>Selecione um cliente</option>
-                  <option v-for="client in clients" :key="client.id" :value="client.id">
-                    {{ client.name }}
-                  </option>
-                </select>
-              </div>
-              
+
               <div class="mb-3">
                 <label for="project-status" class="form-label">Status</label>
                 <select 
@@ -194,8 +179,8 @@
             <p>Tem certeza que deseja excluir o projeto <strong>{{ projectToDelete?.name }}</strong>?</p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showDeleteModal = false">Cancelar</button>
-            <button type="button" class="btn btn-danger" @click="deleteProject" :disabled="formLoading">
+            <button type="button" class="btn btn-secondary transition-all hover-scale" @click="showDeleteModal = false">Cancelar</button>
+            <button type="button" class="btn btn-danger transition-all hover-scale" @click="deleteProject" :disabled="formLoading">
               <span v-if="formLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
               Excluir
             </button>
@@ -211,7 +196,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
 import { projectsService } from '../services/projects'
-import { clientsService } from '../services/clients'
 import { timeEntriesService } from '../services/timeEntries'
 
 const userStore = useUserStore()
@@ -220,7 +204,6 @@ const userStore = useUserStore()
 const loading = ref(true)
 const formLoading = ref(false)
 const projects = ref([])
-const clients = ref([])
 const timeEntries = ref([])
 const showAddModal = ref(false)
 const showDeleteModal = ref(false)
@@ -229,14 +212,12 @@ const currentProjectId = ref(null)
 const projectToDelete = ref(null)
 
 // Filtros
-const clientFilter = ref('')
 const statusFilter = ref('')
 
 // Formulário
 const resetForm = () => {
   return {
     name: '',
-    clientId: '',
     status: 'active',
     description: '',
     hourlyRate: ''
@@ -248,11 +229,6 @@ const projectForm = ref(resetForm())
 // Computed properties
 const filteredProjects = computed(() => {
   let result = [...projects.value]
-  
-  // Filtrar por cliente
-  if (clientFilter.value) {
-    result = result.filter(project => project.clientId === clientFilter.value)
-  }
   
   // Filtrar por status
   if (statusFilter.value) {
@@ -270,15 +246,13 @@ const loadData = async () => {
   try {
     const userId = userStore.userId
     
-    // Carregar projetos, clientes e registros de tempo
-    const [projectsData, clientsData, timeEntriesData] = await Promise.all([
+    // Carregar projetos e registros de tempo
+    const [projectsData, timeEntriesData] = await Promise.all([
       projectsService.getProjects(userId),
-      clientsService.getClients(userId),
       timeEntriesService.getTimeEntries(userId)
     ])
     
     projects.value = projectsData
-    clients.value = clientsData
     timeEntries.value = timeEntriesData
   } catch (error) {
     console.error('Erro ao carregar dados:', error)
@@ -287,10 +261,7 @@ const loadData = async () => {
   }
 }
 
-const getClientName = (clientId) => {
-  const client = clients.value.find(c => c.id === clientId)
-  return client ? client.name : 'Cliente Desconhecido'
-}
+
 
 const getStatusLabel = (status) => {
   const statusMap = {
@@ -339,7 +310,6 @@ const editProject = (project) => {
   
   projectForm.value = {
     name: project.name,
-    clientId: project.clientId,
     status: project.status || 'active',
     description: project.description || '',
     hourlyRate: project.hourlyRate || ''
@@ -416,16 +386,161 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
+/* Page Header */
+.page-header {
+  text-align: left;
+  margin-bottom: 2rem;
 }
 
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  color: var(--secondary-color);
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Filter Header */
+.filter-header {
+  border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.filter-header .card-title {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Modern Button */
+.btn-modern {
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.4);
+}
+
+/* Modern Modal */
+.modern-modal {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(30, 58, 95, 0.2);
+  overflow: hidden;
+}
+
+.modern-modal .modal-header {
+  background: var(--brand-gradient);
+  color: white;
+  border: none;
+  padding: 1.5rem;
+}
+
+.modern-modal .modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.modern-modal .btn-close {
+  filter: invert(1);
+}
+
+.modern-modal .modal-body {
+  padding: 2rem;
+}
+
+/* Status Badges */
+.badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #28a745, #20c997) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+}
+
+.bg-secondary {
+  background: linear-gradient(135deg, #6c757d, #495057) !important;
+}
+
+/* Button Groups */
+.btn-group .btn {
+  border-radius: 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-group .btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-group .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal Backdrop */
+.modal {
+  background-color: rgba(30, 58, 95, 0.4);
+  backdrop-filter: blur(8px);
+}
+
+/* Animation */
 .projects {
-  animation: fadeIn 0.5s;
+  animation: fadeIn 0.5s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .page-header .d-flex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .btn-modern {
+    width: 100%;
+  }
+  
+  .modern-modal .modal-body {
+    padding: 1.5rem;
+  }
 }
 </style>
