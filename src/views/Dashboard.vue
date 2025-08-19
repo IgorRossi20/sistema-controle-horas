@@ -413,9 +413,9 @@ export default {
       return project ? project.name : 'Projeto Desconhecido'
     }
     
-    // Ver detalhes de um registro
+    // Ver detalhes de um registro - navegar para a página de registros
     const viewEntry = (entryId) => {
-      router.push(`/time-entries/${entryId}`)
+      router.push('/time-entries')
     }
     
     // Função para criar dados de teste se não houver dados
