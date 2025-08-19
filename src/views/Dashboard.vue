@@ -488,10 +488,8 @@ export default {
         projects.value = projectsData
         timeEntries.value = timeEntriesData
         
-        // Criar dados de teste se não houver dados
-        if (projects.value.length === 0 || timeEntries.value.length === 0) {
-          await createTestData()
-        }
+        // Dados carregados - não criar dados de teste automaticamente
+        // Para adicionar dados de teste, use o script add-test-data.js no console
         
         console.log('📦 Dados carregados:', {
           projects: projects.value.length,
@@ -530,12 +528,7 @@ export default {
       // Verificar se há dados
       if (!projectHours.value || projectHours.value.length === 0) {
         console.log('❌ Nenhum dado de projeto encontrado')
-        // Criar dados de teste se não houver dados
-        const testData = [
-          { projectName: 'Projeto Teste', hours: 10 },
-          { projectName: 'Projeto Demo', hours: 5 }
-        ]
-        console.log('🧪 Usando dados de teste:', testData)
+        return // Não renderizar gráfico se não há dados
       }
       
       // Destruir gráfico existente
@@ -554,11 +547,8 @@ export default {
           return
         }
         
-        // Usar dados reais ou de teste
-        const dataToUse = projectHours.value.length > 0 ? projectHours.value : [
-          { projectName: 'Projeto Teste', hours: 10 },
-          { projectName: 'Projeto Demo', hours: 5 }
-        ]
+        // Usar dados reais
+        const dataToUse = projectHours.value
         
         const labels = dataToUse.map(p => p.projectName || 'Sem nome')
         const data = dataToUse.map(p => parseFloat(p.hours) || 0)

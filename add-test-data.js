@@ -141,12 +141,13 @@ console.log('  - clearAllData() - Remove todos os dados');
 console.log('  - showCurrentData() - Mostra dados atuais');
 console.log('');
 
-// Adicionar dados automaticamente se não existirem
-const hasData = localStorage.getItem('controle_horas_time_entries');
-if (!hasData || JSON.parse(hasData).length === 0) {
-  console.log('🔍 Nenhum dado encontrado. Adicionando dados de teste...');
-  addTestData();
-} else {
-  console.log('ℹ️ Dados já existem. Use clearAllData() para limpar e addTestData() para recriar.');
-  showCurrentData();
-}
+// EXECUÇÃO AUTOMÁTICA DESABILITADA
+// Para adicionar dados de teste, execute manualmente: addTestData()
+// Para limpar dados, execute: clearAllData()
+// Para ver dados atuais, execute: showCurrentData()
+
+console.log('ℹ️ Script carregado. Execute addTestData() manualmente se necessário.');
+console.log('🚫 Execução automática foi DESABILITADA para evitar dados persistentes.');
+
+// Mostrar dados atuais sem adicionar automaticamente
+showCurrentData();

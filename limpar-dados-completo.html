@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Limpeza Completa de Dados - Controle de Horas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+        .btn-info {
+            background: #3498db;
+            color: white;
+        }
+        .btn-info:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        .data-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #2980b9;
+        }
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpeza Completa de Dados</h1>
+        
+        <div class="alert alert-warning">
+            <h3>⚠️ ATENÇÃO: Múltiplas Fontes de Dados Detectadas!</h3>
+            <p><strong>Problemas identificados:</strong></p>
+            <ul>
+                <li>✅ <code>Dashboard.vue</code> - Criação automática de dados CORRIGIDA</li>
+                <li>🔧 <code>add-test-data.js</code> - Script que adiciona dados automaticamente DESABILITADO</li>
+                <li>🔍 Possível execução manual ou extensão do navegador carregando o script</li>
+            </ul>
+            <p><strong>⚡ SOLUÇÃO DEFINITIVA:</strong> Use a limpeza completa abaixo + recarregue a página!</p>
+        </div>
+
+        <div class="step">
+            <h3>📋 Passo 1: Verificar Dados Atuais</h3>
+            <p>Primeiro, vamos ver o que está armazenado no localStorage:</p>
+            <button class="btn btn-info" onclick="showCurrentData()">🔍 Verificar Dados Atuais</button>
+            <div id="currentData" class="data-display" style="display: none;"></div>
+        </div>
+
+        <div class="step">
+            <h3>🗑️ Passo 2: Limpar Dados</h3>
+            <p>Escolha o tipo de limpeza:</p>
+            <div class="button-group">
+                <button class="btn btn-warning" onclick="clearTestData()">🧹 Limpar Apenas Dados de Teste</button>
+                <button class="btn btn-danger" onclick="clearAllAppData()">💥 Limpar TODOS os Dados da App</button>
+                <button class="btn btn-danger" onclick="clearEntireLocalStorage()">🔥 Limpar TODO o localStorage</button>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🔄 Passo 3: Recarregar Aplicação</h3>
+            <p>Após limpar os dados, recarregue a aplicação para ver as mudanças:</p>
+            <button class="btn btn-info" onclick="reloadApp()">🔄 Recarregar Aplicação</button>
+        </div>
+
+        <div id="result" class="alert" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Chaves do localStorage da aplicação
+        const storageKeys = {
+            clients: 'controle_horas_clients',
+            projects: 'controle_horas_projects',
+            timeEntries: 'controle_horas_time_entries',
+            user: 'controle_horas_user'
+        };
+
+        // Função para mostrar dados atuais
+        function showCurrentData() {
+            const currentDataDiv = document.getElementById('currentData');
+            let html = '<h4>📊 Dados Atuais no localStorage:</h4>';
+            
+            // Verificar dados da aplicação
+            Object.entries(storageKeys).forEach(([name, key]) => {
+                const data = localStorage.getItem(key);
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        const count = Array.isArray(parsed) ? parsed.length : 1;
+                        html += `<p><strong>${name}:</strong> ${count} registros</p>`;
+                        if (count > 0 && count <= 5) {
+                            html += `<pre>${JSON.stringify(parsed, null, 2).substring(0, 200)}...</pre>`;
+                        }
+                    } catch (e) {
+                        html += `<p><strong>${name}:</strong> Dados inválidos</p>`;
+                    }
+                } else {
+                    html += `<p><strong>${name}:</strong> Vazio</p>`;
+                }
+            });
+
+            // Verificar todas as chaves do localStorage
+            html += '<h4>🔍 Todas as Chaves do localStorage:</h4>';
+            const allKeys = Object.keys(localStorage);
+            if (allKeys.length === 0) {
+                html += '<p>✅ localStorage completamente vazio!</p>';
+            } else {
+                allKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    const size = value ? value.length : 0;
+                    html += `<p><code>${key}</code>: ${size} caracteres</p>`;
+                });
+            }
+
+            currentDataDiv.innerHTML = html;
+            currentDataDiv.style.display = 'block';
+        }
+
+        // Função para mostrar resultado
+        function showResult(message, type = 'success') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `alert alert-${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+            
+            // Atualizar dados após 1 segundo
+            setTimeout(showCurrentData, 1000);
+        }
+
+        // Função para limpar apenas dados de teste
+        function clearTestData() {
+            if (confirm('🧹 Tem certeza que deseja limpar os dados de teste (projetos e registros de tempo)?')) {
+                const testKeys = [storageKeys.timeEntries, storageKeys.projects];
+                let totalRemoved = 0;
+
+                testKeys.forEach(key => {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            const count = Array.isArray(parsed) ? parsed.length : 1;
+                            totalRemoved += count;
+                        } catch (e) {
+                            totalRemoved += 1;
+                        }
+                    }
+                    localStorage.removeItem(key);
+                });
+
+                showResult(`🧹 Dados de teste removidos! Total: ${totalRemoved} registros`);
+            }
+        }
+
+        // Função para limpar todos os dados da aplicação
+        function clearAllAppData() {
+            if (confirm('🗑️ ATENÇÃO: Tem certeza que deseja limpar TODOS os dados da aplicação? Esta ação não pode ser desfeita!')) {
+                let totalRemoved = 0;
+
+                // Limpar chaves específicas da aplicação
+                Object.values(storageKeys).forEach(key => {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            const count = Array.isArray(parsed) ? parsed.length : 1;
+                            totalRemoved += count;
+                        } catch (e) {
+                            totalRemoved += 1;
+                        }
+                    }
+                    localStorage.removeItem(key);
+                });
+
+                // Limpar qualquer outra chave relacionada ao controle de horas
+                const allKeys = Object.keys(localStorage);
+                allKeys.forEach(key => {
+                    if (key.includes('controle_horas') || key.includes('time_entries') || key.includes('projects')) {
+                        localStorage.removeItem(key);
+                        totalRemoved++;
+                    }
+                });
+
+                // Forçar reinicialização das chaves como arrays vazios
+                Object.values(storageKeys).forEach(key => {
+                    localStorage.setItem(key, JSON.stringify([]));
+                });
+
+                showResult(`🗑️ LIMPEZA COMPLETA REALIZADA! Total removido: ${totalRemoved} registros. Arrays vazios reinicializados.`);
+                
+                // Recarregar página após 2 segundos
+                setTimeout(() => {
+                    if (confirm('🔄 Deseja recarregar a página agora para ver as mudanças?')) {
+                        window.location.reload();
+                    }
+                }, 2000);
+            }
+        }
+
+        // Função para limpar todo o localStorage
+        function clearEntireLocalStorage() {
+            if (confirm('🔥 ATENÇÃO MÁXIMA: Tem certeza que deseja limpar TODO o localStorage? Isso afetará TODAS as aplicações neste domínio!')) {
+                if (confirm('🚨 ÚLTIMA CONFIRMAÇÃO: Esta ação removerá TODOS os dados de TODAS as aplicações. Continuar?')) {
+                    const totalKeys = Object.keys(localStorage).length;
+                    localStorage.clear();
+                    showResult(`🔥 TODO o localStorage foi limpo! ${totalKeys} chaves removidas`, 'danger');
+                }
+            }
+        }
+
+        // Função para recarregar a aplicação
+        function reloadApp() {
+            if (confirm('🔄 Deseja recarregar a página para ver as mudanças?')) {
+                window.location.reload();
+            }
+        }
+
+        // Mostrar dados atuais ao carregar a página
+        window.onload = function() {
+            showCurrentData();
+        };
+    </script>
+</body>
+</html>
