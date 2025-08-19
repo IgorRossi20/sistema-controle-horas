@@ -43,7 +43,11 @@ class LocalStorageService {
       if (!key) throw new Error(`Coleção '${collectionName}' não encontrada`)
       
       const data = localStorage.getItem(key)
-      return data ? JSON.parse(data) : []
+      if (!data) return []
+      
+      const parsed = JSON.parse(data)
+      // Garantir que sempre retornamos um array válido
+      return Array.isArray(parsed) ? parsed : []
     } catch (error) {
       console.error(`Erro ao obter coleção ${collectionName}:`, error)
       return []
@@ -141,6 +145,15 @@ class LocalStorageService {
   queryDocuments(collectionName, filterFn) {
     try {
       const collection = this.getCollection(collectionName)
+      // Verificações de segurança adicionais
+      if (!Array.isArray(collection)) {
+        console.warn(`Coleção ${collectionName} não é um array válido, retornando array vazio`)
+        return []
+      }
+      if (typeof filterFn !== 'function') {
+        console.warn(`FilterFn não é uma função válida, retornando coleção completa`)
+        return collection
+      }
       return collection.filter(filterFn)
     } catch (error) {
       console.error(`Erro ao consultar documentos em ${collectionName}:`, error)

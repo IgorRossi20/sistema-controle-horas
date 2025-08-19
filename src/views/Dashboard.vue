@@ -294,7 +294,15 @@ export default {
     
     // Filtrar entradas do mês atual
     const currentMonthEntries = computed(() => {
+      if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
+        return []
+      }
+      
       return timeEntries.value.filter(entry => {
+        if (!entry || !entry.date) {
+          return false
+        }
+        
         let entryDate
         if (entry.date instanceof Date) {
           entryDate = entry.date
@@ -312,7 +320,14 @@ export default {
     
     // Calcular total de horas do mês
     const totalHoursMonth = computed(() => {
+      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value)) {
+        return '0.00'
+      }
+      
       const total = currentMonthEntries.value.reduce((sum, entry) => {
+        if (!entry || !entry.hours) {
+          return sum
+        }
         return sum + parseFloat(entry.hours)
       }, 0)
       
@@ -321,8 +336,15 @@ export default {
     
     // Obter projetos ativos (com horas registradas no mês atual)
     const activeProjects = computed(() => {
-      const projectIds = [...new Set(currentMonthEntries.value.map(entry => entry.projectId))]
-      return projects.value.filter(project => projectIds.includes(project.id))
+      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || 
+          !projects.value || !Array.isArray(projects.value)) {
+        return []
+      }
+      
+      const projectIds = [...new Set(currentMonthEntries.value
+        .filter(entry => entry && entry.projectId)
+        .map(entry => entry.projectId))]
+      return projects.value.filter(project => project && projectIds.includes(project.id))
     })
     
     // Calcular progresso mensal para meta de 200 horas
@@ -335,9 +357,18 @@ export default {
     
     // Calcular horas por projeto
     const projectHours = computed(() => {
+      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) ||
+          !projects.value || !Array.isArray(projects.value)) {
+        return []
+      }
+      
       const hours = {}
       
       currentMonthEntries.value.forEach(entry => {
+        if (!entry || !entry.projectId || !entry.hours) {
+          return
+        }
+        
         if (!hours[entry.projectId]) {
           hours[entry.projectId] = 0
         }
@@ -346,7 +377,7 @@ export default {
       })
       
       return Object.keys(hours).map(projectId => {
-        const project = projects.value.find(p => p.id === projectId)
+        const project = projects.value.find(p => p && p.id === projectId)
         return {
           projectId,
           projectName: project ? project.name : 'Projeto Desconhecido',
@@ -357,7 +388,12 @@ export default {
     
     // Obter últimos 5 registros
     const recentEntries = computed(() => {
+      if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
+        return []
+      }
+      
       return [...timeEntries.value]
+        .filter(entry => entry && entry.date)
         .sort((a, b) => {
           let dateA, dateB
           
@@ -516,6 +552,8 @@ export default {
       // Verificar se Chart.js está disponível
       if (typeof Chart === 'undefined') {
         console.error('❌ Chart.js não está disponível')
+        // Tentar carregar Chart.js via CDN como fallback
+        loadChartJSFallback()
         return
       }
       
@@ -528,13 +566,19 @@ export default {
       // Verificar se há dados
       if (!projectHours.value || projectHours.value.length === 0) {
         console.log('❌ Nenhum dado de projeto encontrado')
-        return // Não renderizar gráfico se não há dados
+        // Mostrar mensagem no canvas em vez de não renderizar nada
+        showNoDataMessage()
+        return
       }
       
       // Destruir gráfico existente
       if (chartInstance.value) {
         console.log('🗑️ Destruindo gráfico existente')
-        chartInstance.value.destroy()
+        try {
+          chartInstance.value.destroy()
+        } catch (e) {
+          console.warn('⚠️ Erro ao destruir gráfico:', e)
+        }
         chartInstance.value = null
       }
       
@@ -596,7 +640,62 @@ export default {
         console.error('❌ Erro ao criar gráfico:', error)
         console.error('Stack trace:', error.stack)
         console.error('Chart disponível:', typeof Chart)
+        // Mostrar mensagem de erro no canvas
+        showErrorMessage(error.message)
       }
+    }
+    
+    // Função para carregar Chart.js como fallback
+    const loadChartJSFallback = () => {
+      console.log('🔄 Tentando carregar Chart.js via CDN...')
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js'
+      script.onload = () => {
+        console.log('✅ Chart.js carregado via CDN')
+        // Tentar renderizar novamente após 500ms
+        setTimeout(renderChart, 500)
+      }
+      script.onerror = () => {
+        console.error('❌ Erro ao carregar Chart.js via CDN')
+        showErrorMessage('Erro ao carregar gráficos')
+      }
+      document.head.appendChild(script)
+    }
+    
+    // Função para mostrar mensagem quando não há dados
+    const showNoDataMessage = () => {
+      if (!projectChart.value) return
+      
+      const ctx = projectChart.value.getContext('2d')
+      if (!ctx) return
+      
+      ctx.clearRect(0, 0, projectChart.value.width, projectChart.value.height)
+      ctx.fillStyle = '#6c757d'
+      ctx.font = '16px Inter, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(
+        'Nenhum dado disponível',
+        projectChart.value.width / 2,
+        projectChart.value.height / 2
+      )
+    }
+    
+    // Função para mostrar mensagem de erro
+    const showErrorMessage = (message) => {
+      if (!projectChart.value) return
+      
+      const ctx = projectChart.value.getContext('2d')
+      if (!ctx) return
+      
+      ctx.clearRect(0, 0, projectChart.value.width, projectChart.value.height)
+      ctx.fillStyle = '#dc3545'
+      ctx.font = '14px Inter, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(
+        `Erro: ${message}`,
+        projectChart.value.width / 2,
+        projectChart.value.height / 2
+      )
     }
     
     // Funções de navegação

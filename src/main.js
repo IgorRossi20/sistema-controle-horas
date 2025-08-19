@@ -36,10 +36,16 @@ console.log('🚀 Inicializando sistema de armazenamento local...')
 try {
   localStorageService.initializeData()
   console.log('✅ Sistema de armazenamento local inicializado com sucesso')
+  
+  // Verificações de segurança para evitar erros de .length
+  const clients = localStorageService.queryDocuments('clients', () => true) || []
+  const projects = localStorageService.queryDocuments('projects', () => true) || []
+  const timeEntries = localStorageService.queryDocuments('timeEntries', () => true) || []
+  
   console.log('📊 Dados disponíveis:', {
-    clients: localStorageService.queryDocuments('clients', () => true).length,
-    projects: localStorageService.queryDocuments('projects', () => true).length,
-    timeEntries: localStorageService.queryDocuments('timeEntries', () => true).length
+    clients: Array.isArray(clients) ? clients.length : 0,
+    projects: Array.isArray(projects) ? projects.length : 0,
+    timeEntries: Array.isArray(timeEntries) ? timeEntries.length : 0
   })
 } catch (error) {
   console.error('❌ Erro ao inicializar sistema de armazenamento local:', error)
