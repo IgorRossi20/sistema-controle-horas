@@ -258,25 +258,60 @@ export default {
     const projectChart = ref(null)
     const chartInstance = ref(null)
     
+    // Garantir que os arrays sempre sejam válidos
+    watch(timeEntries, (newVal) => {
+      if (!Array.isArray(newVal)) {
+        console.warn('timeEntries não é um array, corrigindo...', newVal)
+        timeEntries.value = []
+      }
+    }, { immediate: true })
+    
+    watch(projects, (newVal) => {
+      if (!Array.isArray(newVal)) {
+        console.warn('projects não é um array, corrigindo...', newVal)
+        projects.value = []
+      }
+    }, { immediate: true })
+    
     // Carrega dados quando o componente é montado
     onMounted(async () => {
-      console.log('🔧 Componente montado')
-      await loadData()
-      
-      // Aguardar o DOM estar pronto e tentar renderizar o gráfico
-      nextTick(() => {
-        console.log('🎯 nextTick - projectChart.value:', projectChart.value)
-        if (projectChart.value) {
-          console.log('✅ Canvas encontrado no DOM')
-          // Aguardar um pouco mais para garantir que tudo esteja pronto
-          setTimeout(() => {
-            console.log('⏰ Tentando renderizar gráfico após timeout')
-            renderChart()
-          }, 100)
-        } else {
-          console.log('❌ Canvas não encontrado no DOM')
+      try {
+        console.log('🚀 Dashboard montado, carregando dados...')
+        
+        // Garantir que as variáveis estejam inicializadas
+        if (!Array.isArray(timeEntries.value)) {
+          timeEntries.value = []
         }
-      })
+        if (!Array.isArray(projects.value)) {
+          projects.value = []
+        }
+        
+        console.log('🔧 Componente montado')
+        await loadData()
+        
+        // Aguardar o DOM estar pronto e tentar renderizar o gráfico
+        nextTick(() => {
+          console.log('🎯 nextTick - projectChart.value:', projectChart.value)
+          if (projectChart.value) {
+            console.log('✅ Canvas encontrado no DOM')
+            // Aguardar um pouco mais para garantir que tudo esteja pronto
+            setTimeout(() => {
+              console.log('⏰ Tentando renderizar gráfico após timeout')
+              renderChart()
+            }, 100)
+          } else {
+            console.log('❌ Canvas não encontrado no DOM')
+          }
+        })
+        
+        console.log('✅ Dados carregados com sucesso')
+      } catch (error) {
+        console.error('❌ Erro durante a montagem do Dashboard:', error)
+        // Garantir estado seguro em caso de erro
+        timeEntries.value = []
+        projects.value = []
+        loading.value = false
+      }
     })
     
     // Obter o mês atual
@@ -294,57 +329,92 @@ export default {
     
     // Filtrar entradas do mês atual
     const currentMonthEntries = computed(() => {
-      if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
+      try {
+        if (!timeEntries.value || !Array.isArray(timeEntries.value) || timeEntries.value.length === 0) {
+          return []
+        }
+        
+        return timeEntries.value.filter(entry => {
+          try {
+            if (!entry || typeof entry !== 'object' || !entry.date) {
+              return false
+            }
+            
+            let entryDate
+            if (entry.date instanceof Date) {
+              entryDate = entry.date
+            } else if (typeof entry.date === 'string') {
+              entryDate = new Date(entry.date)
+            } else if (entry.date && typeof entry.date === 'object' && entry.date.seconds) {
+              entryDate = new Date(entry.date.seconds * 1000)
+            } else {
+              entryDate = new Date(entry.date)
+            }
+            
+            // Verificar se a data é válida
+            if (isNaN(entryDate.getTime())) {
+              return false
+            }
+            
+            return entryDate >= firstDayOfMonth && entryDate <= lastDayOfMonth
+          } catch (error) {
+            console.warn('Erro ao processar entrada:', entry, error)
+            return false
+          }
+        })
+      } catch (error) {
+        console.error('Erro em currentMonthEntries:', error)
         return []
       }
-      
-      return timeEntries.value.filter(entry => {
-        if (!entry || !entry.date) {
-          return false
-        }
-        
-        let entryDate
-        if (entry.date instanceof Date) {
-          entryDate = entry.date
-        } else if (typeof entry.date === 'string') {
-          entryDate = new Date(entry.date)
-        } else if (entry.date && entry.date.seconds) {
-          entryDate = new Date(entry.date.seconds * 1000)
-        } else {
-          entryDate = new Date(entry.date)
-        }
-        
-        return entryDate >= firstDayOfMonth && entryDate <= lastDayOfMonth
-      })
     })
     
     // Calcular total de horas do mês
     const totalHoursMonth = computed(() => {
-      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value)) {
+      try {
+        if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0) {
+          return '0.00'
+        }
+        
+        const total = currentMonthEntries.value.reduce((sum, entry) => {
+          try {
+            if (!entry || typeof entry !== 'object' || entry.hours === undefined || entry.hours === null) {
+              return sum
+            }
+            const hours = parseFloat(entry.hours)
+            return isNaN(hours) ? sum : sum + hours
+          } catch (error) {
+            console.warn('Erro ao processar horas da entrada:', entry, error)
+            return sum
+          }
+        }, 0)
+        
+        return total.toFixed(2)
+      } catch (error) {
+        console.error('Erro em totalHoursMonth:', error)
         return '0.00'
       }
-      
-      const total = currentMonthEntries.value.reduce((sum, entry) => {
-        if (!entry || !entry.hours) {
-          return sum
-        }
-        return sum + parseFloat(entry.hours)
-      }, 0)
-      
-      return total.toFixed(2)
     })
     
     // Obter projetos ativos (com horas registradas no mês atual)
     const activeProjects = computed(() => {
-      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || 
-          !projects.value || !Array.isArray(projects.value)) {
+      try {
+        if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0 ||
+            !projects.value || !Array.isArray(projects.value) || projects.value.length === 0) {
+          return []
+        }
+        
+        const projectIds = [...new Set(currentMonthEntries.value
+          .filter(entry => entry && typeof entry === 'object' && entry.projectId)
+          .map(entry => entry.projectId)
+          .filter(id => id !== undefined && id !== null))]
+          
+        return projects.value.filter(project => 
+          project && typeof project === 'object' && project.id && projectIds.includes(project.id)
+        )
+      } catch (error) {
+        console.error('Erro em activeProjects:', error)
         return []
       }
-      
-      const projectIds = [...new Set(currentMonthEntries.value
-        .filter(entry => entry && entry.projectId)
-        .map(entry => entry.projectId))]
-      return projects.value.filter(project => project && projectIds.includes(project.id))
     })
     
     // Calcular progresso mensal para meta de 200 horas
@@ -357,96 +427,152 @@ export default {
     
     // Calcular horas por projeto
     const projectHours = computed(() => {
-      if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) ||
-          !projects.value || !Array.isArray(projects.value)) {
+      try {
+        if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0 ||
+            !projects.value || !Array.isArray(projects.value) || projects.value.length === 0) {
+          return []
+        }
+        
+        const hours = {}
+        
+        currentMonthEntries.value.forEach(entry => {
+          try {
+            if (!entry || typeof entry !== 'object' || !entry.projectId || entry.hours === undefined || entry.hours === null) {
+              return
+            }
+            
+            const entryHours = parseFloat(entry.hours)
+            if (isNaN(entryHours)) {
+              return
+            }
+            
+            if (!hours[entry.projectId]) {
+              hours[entry.projectId] = 0
+            }
+            
+            hours[entry.projectId] += entryHours
+          } catch (error) {
+            console.warn('Erro ao processar entrada para projectHours:', entry, error)
+          }
+        })
+        
+        return Object.keys(hours).map(projectId => {
+          try {
+            const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
+            return {
+              projectId,
+              projectName: (project && project.name) ? project.name : 'Projeto Desconhecido',
+              hours: hours[projectId] || 0
+            }
+          } catch (error) {
+            console.warn('Erro ao mapear projeto:', projectId, error)
+            return {
+              projectId,
+              projectName: 'Projeto Desconhecido',
+              hours: hours[projectId] || 0
+            }
+          }
+        }).sort((a, b) => (b.hours || 0) - (a.hours || 0))
+      } catch (error) {
+        console.error('Erro em projectHours:', error)
         return []
       }
-      
-      const hours = {}
-      
-      currentMonthEntries.value.forEach(entry => {
-        if (!entry || !entry.projectId || !entry.hours) {
-          return
-        }
-        
-        if (!hours[entry.projectId]) {
-          hours[entry.projectId] = 0
-        }
-        
-        hours[entry.projectId] += parseFloat(entry.hours)
-      })
-      
-      return Object.keys(hours).map(projectId => {
-        const project = projects.value.find(p => p && p.id === projectId)
-        return {
-          projectId,
-          projectName: project ? project.name : 'Projeto Desconhecido',
-          hours: hours[projectId]
-        }
-      }).sort((a, b) => b.hours - a.hours)
     })
     
     // Obter últimos 5 registros
     const recentEntries = computed(() => {
-      if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
-        return []
-      }
-      
-      return [...timeEntries.value]
-        .filter(entry => entry && entry.date)
-        .sort((a, b) => {
-          let dateA, dateB
-          
-          if (a.date instanceof Date) {
-            dateA = a.date
-          } else if (typeof a.date === 'string') {
-            dateA = new Date(a.date)
-          } else if (a.date && a.date.seconds) {
-            dateA = new Date(a.date.seconds * 1000)
-          } else {
-            dateA = new Date(a.date)
-          }
-          
-          if (b.date instanceof Date) {
-            dateB = b.date
-          } else if (typeof b.date === 'string') {
-            dateB = new Date(b.date)
-          } else if (b.date && b.date.seconds) {
-            dateB = new Date(b.date.seconds * 1000)
-          } else {
-            dateB = new Date(b.date)
-          }
-          
-          return dateB - dateA
-        })
-        .slice(0, 5)
-    })
+      try {
+        if (!timeEntries.value || !Array.isArray(timeEntries.value) || timeEntries.value.length === 0) {
+          return []
+        }
+        
+        return [...timeEntries.value]
+          .filter(entry => entry && typeof entry === 'object' && entry.date)
+          .sort((a, b) => {
+             try {
+               let dateA, dateB
+               
+               if (a.date instanceof Date) {
+                 dateA = a.date
+               } else if (typeof a.date === 'string') {
+                 dateA = new Date(a.date)
+               } else if (a.date && typeof a.date === 'object' && a.date.seconds) {
+                 dateA = new Date(a.date.seconds * 1000)
+               } else {
+                 dateA = new Date(a.date)
+               }
+               
+               if (b.date instanceof Date) {
+                 dateB = b.date
+               } else if (typeof b.date === 'string') {
+                 dateB = new Date(b.date)
+               } else if (b.date && typeof b.date === 'object' && b.date.seconds) {
+                 dateB = new Date(b.date.seconds * 1000)
+               } else {
+                 dateB = new Date(b.date)
+               }
+               
+               // Verificar se as datas são válidas
+               if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+                 return 0
+               }
+               
+               return dateB - dateA
+             } catch (error) {
+               console.warn('Erro ao ordenar entradas:', a, b, error)
+               return 0
+             }
+           })
+           .slice(0, 5)
+       } catch (error) {
+         console.error('Erro em recentEntries:', error)
+         return []
+       }
+     })
     
     // Formatar data
     const formatDate = (date) => {
-      let d
-      if (date instanceof Date) {
-        d = date
-      } else if (typeof date === 'string') {
-        d = new Date(date)
-      } else if (date && date.seconds) {
-        d = new Date(date.seconds * 1000)
-      } else {
-        d = new Date(date)
-      }
-      
-      // Verificar se a data é válida
-      if (isNaN(d.getTime())) {
+      try {
+        if (!date) {
+          return 'Data inválida'
+        }
+        
+        let d
+        if (date instanceof Date) {
+          d = date
+        } else if (typeof date === 'string') {
+          d = new Date(date)
+        } else if (date && typeof date === 'object' && date.seconds) {
+          d = new Date(date.seconds * 1000)
+        } else {
+          d = new Date(date)
+        }
+        
+        // Verificar se a data é válida
+        if (isNaN(d.getTime())) {
+          return 'Data inválida'
+        }
+        
+        return d.toLocaleDateString('pt-BR')
+      } catch (error) {
+        console.warn('Erro ao formatar data:', date, error)
         return 'Data inválida'
       }
-      
-      return d.toLocaleDateString('pt-BR')
     }
     
     // Obter nome do projeto
     const getProjectName = (projectId) => {
-      const project = projects.value.find(p => p.id === projectId)
-      return project ? project.name : 'Projeto Desconhecido'
+      try {
+        if (!projectId || !projects.value || !Array.isArray(projects.value)) {
+          return 'Projeto Desconhecido'
+        }
+        
+        const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
+        return (project && project.name) ? project.name : 'Projeto Desconhecido'
+      } catch (error) {
+        console.warn('Erro ao obter nome do projeto:', projectId, error)
+        return 'Projeto Desconhecido'
+      }
     }
     
     // Ver detalhes de um registro - navegar para a página de registros
@@ -521,8 +647,9 @@ export default {
           timeEntriesService.getTimeEntries(userId)
         ])
         
-        projects.value = projectsData
-        timeEntries.value = timeEntriesData
+        // Verificar se os dados são arrays válidos
+        projects.value = Array.isArray(projectsData) ? projectsData : []
+        timeEntries.value = Array.isArray(timeEntriesData) ? timeEntriesData : []
         
         // Dados carregados - não criar dados de teste automaticamente
         // Para adicionar dados de teste, use o script add-test-data.js no console
@@ -538,6 +665,9 @@ export default {
         console.log('📊 Dados carregados - projectHours:', projectHours.value)
       } catch (error) {
         console.error('❌ Erro ao carregar dados do dashboard:', error)
+        // Garantir que as variáveis tenham valores seguros em caso de erro
+        timeEntries.value = []
+        projects.value = []
       } finally {
         loading.value = false
       }
@@ -545,44 +675,44 @@ export default {
     
     // Renderizar gráfico de horas por projeto
     const renderChart = () => {
-      console.log('🎨 renderChart chamada')
-      console.log('📊 projectChart.value:', projectChart.value)
-      console.log('📈 projectHours.value:', projectHours.value)
-      
-      // Verificar se Chart.js está disponível
-      if (typeof Chart === 'undefined') {
-        console.error('❌ Chart.js não está disponível')
-        // Tentar carregar Chart.js via CDN como fallback
-        loadChartJSFallback()
-        return
-      }
-      
-      // Verificar se o canvas existe
-      if (!projectChart.value) {
-        console.log('❌ Canvas não encontrado')
-        return
-      }
-      
-      // Verificar se há dados
-      if (!projectHours.value || projectHours.value.length === 0) {
-        console.log('❌ Nenhum dado de projeto encontrado')
-        // Mostrar mensagem no canvas em vez de não renderizar nada
-        showNoDataMessage()
-        return
-      }
-      
-      // Destruir gráfico existente
-      if (chartInstance.value) {
-        console.log('🗑️ Destruindo gráfico existente')
-        try {
-          chartInstance.value.destroy()
-        } catch (e) {
-          console.warn('⚠️ Erro ao destruir gráfico:', e)
-        }
-        chartInstance.value = null
-      }
-      
       try {
+        console.log('🎨 renderChart chamada')
+        console.log('📊 projectChart.value:', projectChart.value)
+        console.log('📈 projectHours.value:', projectHours.value)
+        
+        // Verificar se Chart.js está disponível
+        if (typeof Chart === 'undefined') {
+          console.error('❌ Chart.js não está disponível')
+          // Tentar carregar Chart.js via CDN como fallback
+          loadChartJSFallback()
+          return
+        }
+        
+        // Verificar se o canvas existe
+        if (!projectChart.value) {
+          console.log('❌ Canvas não encontrado')
+          return
+        }
+        
+        // Verificar se há dados
+        if (!projectHours.value || !Array.isArray(projectHours.value) || projectHours.value.length === 0) {
+          console.log('❌ Nenhum dado de projeto encontrado')
+          // Mostrar mensagem no canvas em vez de não renderizar nada
+          showNoDataMessage()
+          return
+        }
+        
+        // Destruir gráfico existente
+        if (chartInstance.value) {
+          console.log('🗑️ Destruindo gráfico existente')
+          try {
+            chartInstance.value.destroy()
+          } catch (e) {
+            console.warn('⚠️ Erro ao destruir gráfico:', e)
+          }
+          chartInstance.value = null
+        }
+        
         const ctx = projectChart.value.getContext('2d')
         console.log('🖼️ Context obtido:', !!ctx)
         
@@ -591,11 +721,23 @@ export default {
           return
         }
         
-        // Usar dados reais
-        const dataToUse = projectHours.value
+        // Verificar se todos os itens de dados são válidos
+        const validData = projectHours.value.filter(p => 
+          p && 
+          typeof p === 'object' && 
+          typeof p.projectName === 'string' && 
+          (typeof p.hours === 'number' || typeof p.hours === 'string') && 
+          !isNaN(parseFloat(p.hours))
+        )
         
-        const labels = dataToUse.map(p => p.projectName || 'Sem nome')
-        const data = dataToUse.map(p => parseFloat(p.hours) || 0)
+        if (validData.length === 0) {
+          console.warn('Nenhum dado válido encontrado para o gráfico')
+          showNoDataMessage()
+          return
+        }
+        
+        const labels = validData.map(p => p.projectName || 'Sem nome')
+        const data = validData.map(p => parseFloat(p.hours) || 0)
         
         console.log('🏷️ Labels:', labels)
         console.log('📊 Data:', data)
@@ -642,6 +784,7 @@ export default {
         console.error('Chart disponível:', typeof Chart)
         // Mostrar mensagem de erro no canvas
         showErrorMessage(error.message)
+        chartInstance.value = null
       }
     }
     
