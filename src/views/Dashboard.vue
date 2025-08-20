@@ -235,7 +235,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, computed, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { timeEntriesService, projectsService } from '../services/firebase'
