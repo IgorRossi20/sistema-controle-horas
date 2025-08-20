@@ -42,7 +42,11 @@
 
     <footer class="app-footer bg-light py-3 mt-auto">
       <div class="container text-center">
-        <p class="mb-0">Controle de Horas PJ &copy; {{ currentYear }}</p>
+        <p class="mb-1">Controle de Horas PJ &copy; {{ currentYear }}</p>
+        <p class="mb-0 text-muted small">
+          <i class="bi bi-code-slash me-1"></i>
+          Criado por <strong>Igor Rossi Nunes</strong> para controle das horas trabalhadas em regime PJ
+        </p>
       </div>
     </footer>
   </div>
