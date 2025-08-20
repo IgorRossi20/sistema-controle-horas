@@ -489,9 +489,17 @@ const calculatedHours = computed(() => {
   }
   
   const diffMs = end - start
-  const diffHours = diffMs / (1000 * 60 * 60)
+  const diffMinutes = diffMs / (1000 * 60)
   
-  return diffHours.toFixed(2)
+  // Converter minutos para formato decimal de horas
+  // 30 minutos = 0.30 (não 0.50)
+  const hours = Math.floor(diffMinutes / 60)
+  const minutes = diffMinutes % 60
+  
+  // Formato: H.MM (onde MM são os minutos como decimal)
+  const decimalHours = hours + (minutes / 100)
+  
+  return decimalHours.toFixed(2)
 })
 
 
