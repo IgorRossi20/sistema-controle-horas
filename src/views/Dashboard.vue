@@ -30,7 +30,7 @@
             </div>
             <h5 class="card-title">Projetos Ativos</h5>
             <div class="metric-container">
-              <h2 class="metric-value">{{ activeProjects.length }}</h2>
+              <h2 class="metric-value">{{ (activeProjects && activeProjects.length) || 0 }}</h2>
               <span class="metric-unit">projetos</span>
             </div>
             <p class="metric-period">com horas registradas</p>
@@ -145,15 +145,15 @@
                 <span class="visually-hidden">Carregando...</span>
               </div>
             </div>
-            <div v-else-if="projectHours.length === 0" class="text-center py-5">
+            <div v-else-if="(projectHours && projectHours.length === 0) || !projectHours" class="text-center py-5">
               <p class="text-muted">Nenhum registro de horas encontrado para este mês.</p>
-              <p class="text-muted small">Debug: {{ timeEntries.length }} registros totais, {{ currentMonthEntries.length }} do mês atual</p>
+              <p class="text-muted small">Debug: {{ (timeEntries && timeEntries.length) || 0 }} registros totais, {{ (currentMonthEntries && currentMonthEntries.length) || 0 }} do mês atual</p>
               <router-link to="/time-entries" class="btn btn-primary">
                 Registrar Horas
               </router-link>
             </div>
             <div v-else>
-              <p class="text-muted small mb-3">Debug: {{ projectHours.length }} projetos com horas</p>
+              <p class="text-muted small mb-3">Debug: {{ (projectHours && projectHours.length) || 0 }} projetos com horas</p>
             </div>
             <!-- Canvas sempre presente no DOM -->
             <div v-show="!loading">
@@ -180,7 +180,7 @@
                 <span class="visually-hidden">Carregando...</span>
               </div>
             </div>
-            <div v-else-if="recentEntries.length === 0" class="text-center py-4">
+            <div v-else-if="(recentEntries && recentEntries.length === 0) || !recentEntries" class="text-center py-4">
               <p class="text-muted">Nenhum registro de horas encontrado.</p>
             </div>
             <div v-else class="table-responsive">

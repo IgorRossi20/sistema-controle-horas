@@ -44,7 +44,7 @@
           </div>
         </div>
         
-        <div v-else-if="filteredProjects.length === 0" class="text-center py-5">
+        <div v-else-if="(!filteredProjects || filteredProjects.length === 0)" class="text-center py-5">
           <p class="text-muted mb-3">Nenhum projeto encontrado para os filtros selecionados.</p>
           <button class="btn btn-primary" @click="showAddModal = true">
             Adicionar Projeto

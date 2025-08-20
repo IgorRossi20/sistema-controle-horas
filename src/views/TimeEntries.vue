@@ -53,7 +53,7 @@
           </div>
         </div>
         
-        <div v-else-if="filteredEntries.length === 0" class="text-center py-5">
+        <div v-else-if="(!filteredEntries || filteredEntries.length === 0)" class="text-center py-5">
           <p class="text-muted mb-3">Nenhum registro de horas encontrado para os filtros selecionados.</p>
           <button class="btn btn-primary" @click="showAddModal = true">
             Adicionar Registro

@@ -103,13 +103,13 @@
           </div>
         </div>
         
-        <div v-else-if="!reportData.length && reportGenerated" class="text-center py-5">
+        <div v-else-if="(!reportData || !reportData.length) && reportGenerated" class="text-center py-5">
           <p class="text-muted mb-3">
             Nenhum registro de horas encontrado para o período selecionado.
           </p>
         </div>
         
-        <div v-else-if="reportData.length && reportGenerated">
+        <div v-else-if="reportData && reportData.length && reportGenerated">
           <div class="report-header mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <div>
@@ -133,7 +133,7 @@
               </div>
               <div class="col-md-6 text-md-end">
                 <p class="mb-1"><strong>Total de Horas:</strong> {{ totalHours }}</p>
-                <p class="mb-1"><strong>Total de Projetos:</strong> {{ uniqueProjects.length }}</p>
+                <p class="mb-1"><strong>Total de Projetos:</strong> {{ (uniqueProjects && uniqueProjects.length) || 0 }}</p>
               </div>
             </div>
           </div>
