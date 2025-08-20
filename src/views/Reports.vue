@@ -143,7 +143,7 @@
             <div v-for="(dayData, date) in displayData" :key="date" class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h5 mb-0">{{ date }}</h3>
-                <span class="badge bg-primary rounded-pill">{{ dayData.totalHours.toFixed(2) }} horas</span>
+                <span class="badge bg-primary rounded-pill">{{ formatHoursFromMinutes(dayData.totalHours) }} horas</span>
               </div>
               
               <div class="table-responsive">
@@ -335,14 +335,25 @@ const totalHours = computed(() => {
   const total = filteredEntries.value.reduce((sum, entry) => {
     // Verificar se entry é válido e tem hours
     if (!entry || typeof entry !== 'object' || entry.hours === undefined || entry.hours === null) {
-      return sum
-    }
+       return sum
+     }
     
-    const hours = parseFloat(entry.hours)
-    return sum + (isNaN(hours) ? 0 : hours)
-  }, 0)
+    // Converter de formato H.MM para minutos
+    const hoursStr = entry.hours.toString();
+    const parts = hoursStr.split('.');
+    const hours = parseInt(parts[0]);
+    const minutes = parts.length > 1 ? parseInt(parts[1]) : 0;
+    
+    // Soma em minutos
+    return sum + (hours * 60) + minutes;
+  }, 0);
   
-  return total.toFixed(2)
+  // Converter minutos de volta para formato H.MM
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  const decimalHours = hours + (minutes / 100);
+  
+  return decimalHours.toFixed(2);
 })
 
 const uniqueProjects = computed(() => {
@@ -387,7 +398,14 @@ const displayData = computed(() => {
       }
       
       dailyData[dateKey].entries.push(entry)
-      dailyData[dateKey].totalHours += parseFloat(entry.hours)
+      
+      // Converter de formato H.MM para minutos e somar
+      const hoursStr = entry.hours.toString();
+      const parts = hoursStr.split('.');
+      const hours = parseInt(parts[0]);
+      const minutes = parts.length > 1 ? parseInt(parts[1]) : 0;
+      dailyData[dateKey].totalHours += (hours * 60) + minutes;
+      
       dailyData[dateKey].projects.add(entry.projectId)
     })
     
@@ -466,6 +484,13 @@ const formatReportPeriod = () => {
   return `${month} de ${selectedYear.value}`
 }
 
+const formatHoursFromMinutes = (totalMinutes) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const decimalHours = hours + (minutes / 100);
+  return decimalHours.toFixed(2);
+}
+
 
 
 const getProjectName = (projectId) => {
@@ -496,11 +521,22 @@ const projectTotalHours = (projectId) => {
       return sum
     }
     
-    const hours = parseFloat(entry.hours)
-    return sum + (isNaN(hours) ? 0 : hours)
-  }, 0)
+    // Converter de formato H.MM para minutos
+    const hoursStr = entry.hours.toString();
+    const parts = hoursStr.split('.');
+    const hours = parseInt(parts[0]);
+    const minutes = parts.length > 1 ? parseInt(parts[1]) : 0;
+    
+    // Soma em minutos
+    return sum + (hours * 60) + minutes;
+  }, 0);
   
-  return total.toFixed(2)
+  // Converter minutos de volta para formato H.MM
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  const decimalHours = hours + (minutes / 100);
+  
+  return decimalHours.toFixed(2);
 }
 
 const exportToPDF = async () => {
