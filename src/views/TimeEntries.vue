@@ -469,10 +469,22 @@ const filteredEntries = computed(() => {
 
 const totalHours = computed(() => {
   const total = filteredEntries.value.reduce((sum, entry) => {
-    return sum + parseFloat(entry.hours)
-  }, 0)
+    // Converter de formato H.MM para minutos
+    const hoursStr = entry.hours.toString();
+    const parts = hoursStr.split('.');
+    const hours = parseInt(parts[0]);
+    const minutes = parts.length > 1 ? parseInt(parts[1]) : 0;
+    
+    // Soma em minutos
+    return sum + (hours * 60) + minutes;
+  }, 0);
   
-  return total.toFixed(2)
+  // Converter minutos de volta para formato H.MM
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  const decimalHours = hours + (minutes / 100);
+  
+  return decimalHours.toFixed(2);
 })
 
 const calculatedHours = computed(() => {
