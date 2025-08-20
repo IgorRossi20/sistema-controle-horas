@@ -266,7 +266,17 @@ const filteredEntries = computed(() => {
 const groupedEntries = computed(() => {
   const grouped = {}
   
+  // Verificar se filteredEntries é um array válido
+  if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+    return grouped
+  }
+  
   filteredEntries.value.forEach(entry => {
+    // Verificar se entry é válido
+    if (!entry || typeof entry !== 'object' || !entry.projectId) {
+      return
+    }
+    
     // Agrupar por projeto
     if (!grouped[entry.projectId]) {
       grouped[entry.projectId] = []
@@ -277,7 +287,16 @@ const groupedEntries = computed(() => {
   
   // Ordenar entradas por data dentro de cada projeto
   Object.keys(grouped).forEach(projectId => {
+    // Verificar se o array do projeto é válido
+    if (!grouped[projectId] || !Array.isArray(grouped[projectId])) {
+      return
+    }
+    
     grouped[projectId].sort((a, b) => {
+      // Verificar se a e b são objetos válidos
+      if (!a || !b || typeof a !== 'object' || typeof b !== 'object') {
+        return 0
+      }
         let dateA, dateB
         
         if (a.date instanceof Date) {
@@ -308,15 +327,35 @@ const groupedEntries = computed(() => {
 })
 
 const totalHours = computed(() => {
+  // Verificar se filteredEntries é um array válido
+  if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+    return '0.00'
+  }
+  
   const total = filteredEntries.value.reduce((sum, entry) => {
-    return sum + parseFloat(entry.hours)
+    // Verificar se entry é válido e tem hours
+    if (!entry || typeof entry !== 'object' || entry.hours === undefined || entry.hours === null) {
+      return sum
+    }
+    
+    const hours = parseFloat(entry.hours)
+    return sum + (isNaN(hours) ? 0 : hours)
   }, 0)
   
   return total.toFixed(2)
 })
 
 const uniqueProjects = computed(() => {
-  const projectIds = new Set(filteredEntries.value.map(entry => entry.projectId))
+  // Verificar se filteredEntries é um array válido
+  if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+    return []
+  }
+  
+  const projectIds = new Set(
+    filteredEntries.value
+      .filter(entry => entry && typeof entry === 'object' && entry.projectId)
+      .map(entry => entry.projectId)
+  )
   return Array.from(projectIds)
 })
 
@@ -327,7 +366,16 @@ const displayData = computed(() => {
     // Para relatório diário, agrupar por data
     const dailyData = {}
     
+    // Verificar se filteredEntries é um array válido
+    if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+      return dailyData
+    }
+    
     filteredEntries.value.forEach(entry => {
+      // Verificar se entry é válido
+      if (!entry || typeof entry !== 'object' || !entry.date) {
+        return
+      }
       const dateKey = formatDate(entry.date)
       
       if (!dailyData[dateKey]) {
@@ -421,19 +469,35 @@ const formatReportPeriod = () => {
 
 
 const getProjectName = (projectId) => {
-  const project = projects.value.find(p => p.id === projectId)
-  return project ? project.name : 'Projeto Desconhecido'
+  // Verificar se projects é um array válido
+  if (!projects.value || !Array.isArray(projects.value)) {
+    return 'Projeto Desconhecido'
+  }
+  
+  const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
+  return (project && project.name) ? project.name : 'Projeto Desconhecido'
 }
 
 
 
 const projectTotalHours = (projectId) => {
+  // Verificar se filteredEntries é um array válido
+  if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+    return '0.00'
+  }
+  
   const projectEntries = filteredEntries.value.filter(
-    entry => entry.projectId === projectId
+    entry => entry && typeof entry === 'object' && entry.projectId === projectId
   )
   
   const total = projectEntries.reduce((sum, entry) => {
-    return sum + parseFloat(entry.hours)
+    // Verificar se entry é válido e tem hours
+    if (!entry || typeof entry !== 'object' || entry.hours === undefined || entry.hours === null) {
+      return sum
+    }
+    
+    const hours = parseFloat(entry.hours)
+    return sum + (isNaN(hours) ? 0 : hours)
   }, 0)
   
   return total.toFixed(2)
@@ -454,10 +518,13 @@ const exportToPDF = async () => {
     // Formatar dados para o relatório baseado no tipo selecionado
     let formattedData, headers
     
+    // Verificar se projects é um array válido
+    const validProjects = projects.value && Array.isArray(projects.value) ? projects.value : []
+    
     if (selectedReportType.value === 'daily') {
       formattedData = exportService.formatDailyReport(
         reportData.value,
-        projects.value
+        validProjects
       )
       
       headers = [
@@ -470,7 +537,7 @@ const exportToPDF = async () => {
     } else {
       formattedData = exportService.formatMonthlyReport(
         reportData.value,
-        projects.value
+        validProjects
       )
       
       headers = [
@@ -495,7 +562,8 @@ const exportToPDF = async () => {
 }
 
 const exportToExcel = async () => {
-  if (!reportData.value.length) {
+  // Verificar se reportData é um array válido
+  if (!reportData.value || !Array.isArray(reportData.value) || !reportData.value.length) {
     alert('Não há dados para exportar. Gere um relatório primeiro.')
     return
   }
@@ -506,10 +574,13 @@ const exportToExcel = async () => {
     const userName = userStore.userName
     const userCompany = 'Empresa Exemplo'
     
+    // Verificar se projects é um array válido
+    const validProjects = projects.value && Array.isArray(projects.value) ? projects.value : []
+    
     // Formatar dados para o relatório baseado no tipo selecionado
     const formattedData = selectedReportType.value === 'daily' 
-      ? exportService.formatDailyReport(reportData.value, projects.value)
-      : exportService.formatMonthlyReport(reportData.value, projects.value)
+      ? exportService.formatDailyReport(reportData.value, validProjects)
+      : exportService.formatMonthlyReport(reportData.value, validProjects)
     
     // Exportar para Excel
     await exportService.exportToExcel(

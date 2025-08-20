@@ -585,23 +585,28 @@ export default {
       console.log('🧪 Criando dados de teste...')
       
       // Criar projeto de teste se não existir
-      if (projects.value.length === 0) {
-        const testProject = {
-          id: 'test-project-1',
-          name: 'Projeto Teste',
-          description: 'Projeto para testar o dashboard',
-          status: 'active',
-          userId: userStore.userId,
-          createdAt: new Date().toISOString()
-        }
-        
-        await projectsService.addProject(testProject)
-         projects.value.push(testProject)
-         console.log('✅ Projeto de teste criado')
-       }
+    if (!projects.value || !Array.isArray(projects.value) || projects.value.length === 0) {
+      const testProject = {
+        id: 'test-project-1',
+        name: 'Projeto Teste',
+        description: 'Projeto para testar o dashboard',
+        status: 'active',
+        userId: userStore.userId,
+        createdAt: new Date().toISOString()
+      }
+      
+      await projectsService.addProject(testProject)
        
-       // Criar registros de tempo de teste se não existir
-       if (timeEntries.value.length === 0) {
+       // Garantir que projects.value é um array antes de fazer push
+       if (!projects.value || !Array.isArray(projects.value)) {
+         projects.value = []
+       }
+       projects.value.push(testProject)
+       console.log('✅ Projeto de teste criado')
+     }
+     
+     // Criar registros de tempo de teste se não existir
+     if (!timeEntries.value || !Array.isArray(timeEntries.value) || timeEntries.value.length === 0) {
          const today = new Date()
          const testEntries = [
            {
@@ -626,6 +631,11 @@ export default {
          
          for (const entry of testEntries) {
            await timeEntriesService.addTimeEntry(entry)
+           
+           // Garantir que timeEntries.value é um array antes de fazer push
+           if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
+             timeEntries.value = []
+           }
            timeEntries.value.push(entry)
          }
         
