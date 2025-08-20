@@ -197,8 +197,7 @@
                   id="entry-description" 
                   v-model="entryForm.description" 
                   class="form-control" 
-                  rows="3" 
-                  required
+                  rows="3"
                 ></textarea>
               </div>
               
