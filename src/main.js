@@ -27,36 +27,46 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 // Importando estilos globais
 import './assets/main.css'
 
-// Configuração do sistema de armazenamento local
-import localStorageService from './services/localStorage'
+// Configuração do Firebase
+import { initializeApp } from 'firebase/app'
+import { getFirestore } from 'firebase/firestore'
+import { getAnalytics } from 'firebase/analytics'
 
-// Inicializa o sistema de armazenamento local
-console.log('🚀 Inicializando sistema de armazenamento local...')
-
-try {
-  localStorageService.initializeData()
-  console.log('✅ Sistema de armazenamento local inicializado com sucesso')
-  
-  // Verificações de segurança para evitar erros de .length
-  const clients = localStorageService.queryDocuments('clients', () => true) || []
-  const projects = localStorageService.queryDocuments('projects', () => true) || []
-  const timeEntries = localStorageService.queryDocuments('timeEntries', () => true) || []
-  
-  console.log('📊 Dados disponíveis:', {
-    clients: Array.isArray(clients) ? clients.length : 0,
-    projects: Array.isArray(projects) ? projects.length : 0,
-    timeEntries: Array.isArray(timeEntries) ? timeEntries.length : 0
-  })
-} catch (error) {
-  console.error('❌ Erro ao inicializar sistema de armazenamento local:', error)
+// Configuração do Firebase
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 }
 
-// Mock para compatibilidade com componentes existentes
-const db = null
-const analytics = null
+// Inicializa o Firebase
+console.log('🚀 Inicializando Firebase...')
 
-// Sistema de armazenamento local já inicializado acima
-console.log('🎉 Aplicação pronta para uso com armazenamento local!')
+let db = null
+let analytics = null
+
+try {
+  const firebaseApp = initializeApp(firebaseConfig)
+  db = getFirestore(firebaseApp)
+  
+  // Inicializar Analytics apenas se measurementId estiver disponível
+  if (firebaseConfig.measurementId) {
+    analytics = getAnalytics(firebaseApp)
+  }
+  
+  console.log('✅ Firebase inicializado com sucesso')
+  console.log('🔥 Firestore conectado:', !!db)
+  console.log('📊 Analytics ativo:', !!analytics)
+} catch (error) {
+  console.error('❌ Erro ao inicializar Firebase:', error)
+  console.log('⚠️ Verifique as variáveis de ambiente no arquivo .env')
+}
+
+console.log('🎉 Aplicação pronta para uso com Firebase!')
 
 // Exporta para uso em outros componentes
 export { db, analytics }
