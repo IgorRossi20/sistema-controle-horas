@@ -648,7 +648,7 @@ const saveEntry = async () => {
     const userId = userStore.userId
     const formData = {
       ...entryForm.value,
-      date: new Date(entryForm.value.date),
+      date: new Date(entryForm.value.date + 'T00:00:00'),
       startTime: entryForm.value.startTime,
       endTime: entryForm.value.endTime,
       hours: parseFloat(entryForm.value.hours).toFixed(2)
