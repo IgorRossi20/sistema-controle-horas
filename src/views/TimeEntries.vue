@@ -22,7 +22,7 @@
           </h5>
         </div>
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label for="month" class="form-label">Mês</label>
             <select id="month" v-model="filters.month" class="form-select">
               <option v-for="(month, index) in months" :key="index" :value="index">
@@ -31,7 +31,29 @@
             </select>
           </div>
           
-          <div class="col-md-8">
+          <div class="col-md-3">
+            <label for="specific-date" class="form-label">Data Específica</label>
+            <div class="input-group">
+              <input 
+                type="date" 
+                id="specific-date" 
+                v-model="filters.specificDate" 
+                class="form-control"
+                placeholder="Selecione uma data"
+              />
+              <button 
+                v-if="filters.specificDate" 
+                @click="clearSpecificDate" 
+                class="btn btn-outline-secondary" 
+                type="button"
+                title="Limpar filtro de data"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
             <label for="project" class="form-label">Projeto</label>
             <select id="project" v-model="filters.projectId" class="form-select">
               <option value="">Todos os projetos</option>
@@ -101,7 +123,9 @@
               </tbody>
               <tfoot>
                 <tr class="table-light fw-bold">
-                  <td colspan="3" class="text-end">Total de Horas:</td>
+                  <td colspan="3" class="text-end">
+                    {{ filters.specificDate ? `Total do Dia (${formatDateBR(filters.specificDate)}):` : `Total do Mês (${months[filters.month]}):` }}
+                  </td>
                   <td>{{ totalHours }}</td>
                   <td></td>
                 </tr>
@@ -351,7 +375,8 @@ const months = [
 // Filtros
 const filters = ref({
   month: new Date().getMonth(),
-  projectId: ''
+  projectId: '',
+  specificDate: ''
 })
 
 // Formulário
@@ -373,21 +398,41 @@ const entryToDelete = ref(null)
 const filteredEntries = computed(() => {
   let result = [...timeEntries.value]
   
-  // Filtrar por mês
-  result = result.filter(entry => {
-    let entryDate
-    if (entry.date instanceof Date) {
-      entryDate = entry.date
-    } else if (typeof entry.date === 'string') {
-      entryDate = new Date(entry.date)
-    } else if (entry.date && entry.date.seconds) {
-      entryDate = new Date(entry.date.seconds * 1000)
-    } else {
-      entryDate = new Date(entry.date)
-    }
-    
-    return entryDate.getMonth() === filters.value.month
-  })
+  // Filtrar por data específica ou por mês
+  if (filters.value.specificDate) {
+    // Se uma data específica foi selecionada, filtrar por essa data
+    result = result.filter(entry => {
+      let entryDate
+      if (entry.date instanceof Date) {
+        entryDate = entry.date
+      } else if (typeof entry.date === 'string') {
+        entryDate = new Date(entry.date)
+      } else if (entry.date && entry.date.seconds) {
+        entryDate = new Date(entry.date.seconds * 1000)
+      } else {
+        entryDate = new Date(entry.date)
+      }
+      
+      const selectedDate = new Date(filters.value.specificDate)
+      return entryDate.toDateString() === selectedDate.toDateString()
+    })
+  } else {
+    // Se não há data específica, filtrar por mês
+    result = result.filter(entry => {
+      let entryDate
+      if (entry.date instanceof Date) {
+        entryDate = entry.date
+      } else if (typeof entry.date === 'string') {
+        entryDate = new Date(entry.date)
+      } else if (entry.date && entry.date.seconds) {
+        entryDate = new Date(entry.date.seconds * 1000)
+      } else {
+        entryDate = new Date(entry.date)
+      }
+      
+      return entryDate.getMonth() === filters.value.month
+    })
+  }
   
   // Filtrar por projeto
   if (filters.value.projectId) {
@@ -580,6 +625,16 @@ const validateTimeInput = (event, field) => {
 const getProjectName = (projectId) => {
   const project = projects.value.find(p => p.id === projectId)
   return project ? project.name : 'Projeto Desconhecido'
+}
+
+const clearSpecificDate = () => {
+  filters.value.specificDate = ''
+}
+
+const formatDateBR = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString + 'T00:00:00')
+  return date.toLocaleDateString('pt-BR')
 }
 
 const closeModal = () => {
