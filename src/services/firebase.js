@@ -262,6 +262,35 @@ export const timeEntriesService = {
     }
   },
 
+  // Buscar lançamentos por período (para relatórios)
+  async getTimeEntriesByPeriod(userId, startDate, endDate) {
+    try {
+      // Converter datas para Timestamp do Firestore se necessário
+      const start = startDate instanceof Date ? startDate : new Date(startDate)
+      const end = endDate instanceof Date ? endDate : new Date(endDate)
+      
+      const q = query(
+        collection(db, 'timeEntries'),
+        where('userId', '==', userId),
+        where('date', '>=', start),
+        where('date', '<=', end),
+        orderBy('date', 'desc')
+      )
+      
+      const querySnapshot = await getDocs(q)
+      const timeEntries = []
+      
+      querySnapshot.forEach((doc) => {
+        timeEntries.push({ id: doc.id, ...doc.data() })
+      })
+      
+      return timeEntries
+    } catch (error) {
+      console.error('Erro ao buscar lançamentos por período:', error)
+      throw error
+    }
+  },
+
   // Atualizar lançamento
   async updateTimeEntry(timeEntryId, updates) {
     try {
