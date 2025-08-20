@@ -76,13 +76,16 @@
                 <div class="col-md-3 col-6 mb-2">
                   <div class="border-end">
                     <div class="h5 mb-0 text-primary">{{ monthlyProgress.remainingHours }}</div>
-                    <small class="text-muted">Horas Restantes</small>
+                    <small class="text-muted">Horas Restantes do Mês</small>
+                    <div v-if="monthlyProgress.isFirstDayReset" class="badge bg-info mt-1">
+                      <i class="bi bi-arrow-clockwise me-1"></i>Reset Dia 1º
+                    </div>
                   </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
                   <div class="border-end">
                     <div class="h5 mb-0 text-info">{{ monthlyProgress.averageHoursPerDay }}</div>
-                    <small class="text-muted">Média/Dia Útil</small>
+                    <small class="text-muted">Média/Dia Útil {{ currentMonthName }}</small>
                   </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
@@ -94,7 +97,7 @@
                 <div class="col-md-3 col-6 mb-2">
                   <div>
                     <div class="h5 mb-0 text-warning">{{ monthlyProgress.remainingDays }}</div>
-                    <small class="text-muted">Dias Restantes</small>
+                    <small class="text-muted">Dias Restantes do Mês</small>
                   </div>
                 </div>
               </div>
@@ -422,7 +425,8 @@ export default {
       const hoursWorked = parseFloat(totalHoursMonth.value)
       const currentDate = new Date()
       
-      return workingDaysService.getMonthlyProgress(hoursWorked, currentDate)
+      // Passar os registros do mês atual para calcular dias trabalhados reais
+      return workingDaysService.getMonthlyProgress(hoursWorked, currentDate, currentMonthEntries.value)
     })
     
     // Calcular horas por projeto

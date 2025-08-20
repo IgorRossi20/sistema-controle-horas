@@ -28,6 +28,19 @@ Este é um aplicativo web simples para controle de horas trabalhadas, desenvolvi
 - Visualização mensal das horas com total acumulado
 - Exportação para PDF ou Excel
 - Interface responsiva e fácil de usar
+- Detecção automática de adblockers com orientações
+
+## ⚠️ Importante: Adblockers
+
+Se você estiver usando um adblocker (uBlock Origin, AdBlock, etc.), pode ser necessário desabilitá-lo para este site para que todas as funcionalidades funcionem corretamente.
+
+### Como desabilitar:
+1. **uBlock Origin**: Clique no ícone → botão power → recarregue a página
+2. **AdBlock**: Clique no ícone → "Pausar no site" → recarregue a página
+3. **Brave**: Clique no escudo → desative "Bloquear scripts" → recarregue a página
+
+### Por que isso acontece?
+Os adblockers podem bloquear as requisições do Firebase/Firestore, causando erros como `ERR_BLOCKED_BY_CLIENT` no console e impedindo o funcionamento normal da aplicação.
 
 ## Estrutura do Projeto
 

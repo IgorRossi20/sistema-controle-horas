@@ -167,62 +167,153 @@ function getWorkedDaysInMonth(currentDate = new Date()) {
 }
 
 /**
+ * Calcula o número de dias trabalhados no mês atual (com registros de horas)
+ * @param {Array} timeEntries - Array de registros de tempo do mês
+ * @param {Date} currentDate - Data atual
+ * @returns {number} - Número de dias trabalhados
+ */
+function getActualWorkedDaysInMonth(timeEntries, currentDate = new Date()) {
+  if (!timeEntries || !Array.isArray(timeEntries) || timeEntries.length === 0) {
+    return 0
+  }
+  
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  
+  // Obter datas únicas dos registros de tempo no mês atual
+  const workedDates = new Set()
+  
+  timeEntries.forEach(entry => {
+    try {
+      let entryDate
+      if (entry.date instanceof Date) {
+        entryDate = entry.date
+      } else if (typeof entry.date === 'string') {
+        entryDate = new Date(entry.date)
+      } else if (entry.date && typeof entry.date === 'object' && entry.date.seconds) {
+        entryDate = new Date(entry.date.seconds * 1000)
+      } else {
+        entryDate = new Date(entry.date)
+      }
+      
+      // Verificar se a data é válida e do mês atual
+      if (!isNaN(entryDate.getTime()) && 
+          entryDate.getFullYear() === year && 
+          entryDate.getMonth() === month) {
+        const dateKey = `${entryDate.getFullYear()}-${entryDate.getMonth()}-${entryDate.getDate()}`
+        workedDates.add(dateKey)
+      }
+    } catch (error) {
+      console.warn('Erro ao processar data do registro:', entry, error)
+    }
+  })
+  
+  return workedDates.size
+}
+
+/**
+ * Calcula o número de dias restantes no mês atual
+ * @param {Date} currentDate - Data atual
+ * @returns {number} - Número de dias restantes no mês
+ */
+function getRemainingDaysInMonth(currentDate = new Date()) {
+  const year = currentDate.getFullYear()
+  const month = currentDate.getMonth()
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const currentDay = currentDate.getDate()
+  
+  return Math.max(0, lastDay - currentDay)
+}
+
+/**
  * Calcula estatísticas de progresso mensal para a faixa de 180-200 horas
  * @param {number} hoursWorked - Horas já trabalhadas no mês
  * @param {Date} currentDate - Data atual
+ * @param {Array} timeEntries - Array de registros de tempo do mês (opcional)
  * @returns {Object} - Estatísticas de progresso
  */
-function getMonthlyProgress(hoursWorked, currentDate = new Date()) {
+function getMonthlyProgress(hoursWorked, currentDate = new Date(), timeEntries = []) {
   const MONTHLY_MIN = 180
   const MONTHLY_TARGET = 200
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   
+  // Verificar se é dia 1º do mês para reset
+  const isFirstDayOfMonth = currentDate.getDate() === 1
+  
+  // Se for dia 1º, as horas restantes devem ser resetadas para a meta completa
+  const effectiveHoursWorked = isFirstDayOfMonth ? 0 : hoursWorked
+  
   const totalWorkingDays = getWorkingDaysInMonth(year, month)
-  const workedDays = getWorkedDaysInMonth(currentDate)
-  const remainingDays = getRemainingWorkingDays(currentDate)
+  const workedDaysUteis = getWorkedDaysInMonth(currentDate)
+  const remainingWorkingDays = getRemainingWorkingDays(currentDate)
+  
+  // Dias trabalhados reais (com registros) e dias restantes do mês
+  const actualWorkedDays = getActualWorkedDaysInMonth(timeEntries, currentDate)
+  const remainingDaysInMonth = getRemainingDaysInMonth(currentDate)
   
   // Calcular progresso baseado na faixa 180-200
-  const progressPercentage = (hoursWorked / MONTHLY_TARGET) * 100
-  const minProgressPercentage = (hoursWorked / MONTHLY_MIN) * 100
+  const progressPercentage = (effectiveHoursWorked / MONTHLY_TARGET) * 100
+  const minProgressPercentage = (effectiveHoursWorked / MONTHLY_MIN) * 100
   
   // Calcular horas restantes baseado no contexto atual
   let targetHours = MONTHLY_TARGET
-  if (hoursWorked < MONTHLY_MIN) {
+  if (effectiveHoursWorked < MONTHLY_MIN) {
     // Se ainda não atingiu o mínimo, foca em atingir 180h
     targetHours = MONTHLY_MIN
-  } else if (hoursWorked >= MONTHLY_MIN && hoursWorked < MONTHLY_TARGET) {
+  } else if (effectiveHoursWorked >= MONTHLY_MIN && effectiveHoursWorked < MONTHLY_TARGET) {
     // Se já atingiu o mínimo, pode mirar nas 200h sem pressão
     targetHours = MONTHLY_TARGET
   } else {
     // Se já passou de 200h, não precisa trabalhar mais
-    targetHours = hoursWorked
+    targetHours = effectiveHoursWorked
   }
   
-  const remainingHours = Math.max(0, targetHours - hoursWorked)
-  const averageHoursPerDay = remainingDays > 0 ? remainingHours / remainingDays : 0
+  // Horas restantes sempre baseadas na meta (reset no dia 1º)
+  const remainingHours = isFirstDayOfMonth ? MONTHLY_MIN : Math.max(0, targetHours - effectiveHoursWorked)
+  
+  // Dias úteis fixos por mês
+  const fixedWorkingDaysByMonth = {
+    0: 22,  // Janeiro
+    1: 20,  // Fevereiro
+    2: 23,  // Março
+    3: 22,  // Abril
+    4: 22,  // Maio
+    5: 21,  // Junho
+    6: 23,  // Julho
+    7: 21,  // Agosto
+    8: 22,  // Setembro
+    9: 23,  // Outubro
+    10: 21, // Novembro
+    11: 21  // Dezembro
+  }
+  
+  // Usar dias úteis fixos para o cálculo da média
+  const fixedWorkingDays = fixedWorkingDaysByMonth[month] || totalWorkingDays
+  const averageHoursPerWorkingDay = fixedWorkingDays > 0 ? targetHours / fixedWorkingDays : 0
   
   // Expectativa baseada no mínimo de 180h
-  const expectedMinHours = (workedDays / totalWorkingDays) * MONTHLY_MIN
-  const expectedTargetHours = (workedDays / totalWorkingDays) * MONTHLY_TARGET
-  const isOnTrack = hoursWorked >= expectedMinHours
+  const expectedMinHours = (workedDaysUteis / totalWorkingDays) * MONTHLY_MIN
+  const expectedTargetHours = (workedDaysUteis / totalWorkingDays) * MONTHLY_TARGET
+  const isOnTrack = effectiveHoursWorked >= expectedMinHours
   
   return {
     monthlyMin: MONTHLY_MIN,
     monthlyTarget: MONTHLY_TARGET,
     targetHours,
-    hoursWorked,
+    hoursWorked: effectiveHoursWorked,
     remainingHours,
     progressPercentage: Math.round(progressPercentage * 100) / 100,
     minProgressPercentage: Math.round(minProgressPercentage * 100) / 100,
     totalWorkingDays,
-    workedDays,
-    remainingDays,
-    averageHoursPerDay: Math.round(averageHoursPerDay * 100) / 100,
+    workedDays: actualWorkedDays, // Dias realmente trabalhados (com registros)
+    remainingDays: remainingDaysInMonth, // Dias restantes do mês
+    averageHoursPerDay: Math.round(averageHoursPerWorkingDay * 100) / 100, // Média por dia útil
     expectedMinHours: Math.round(expectedMinHours * 100) / 100,
     expectedTargetHours: Math.round(expectedTargetHours * 100) / 100,
     isOnTrack,
-    status: getProgressStatus(hoursWorked, MONTHLY_MIN, MONTHLY_TARGET, isOnTrack)
+    isFirstDayReset: isFirstDayOfMonth, // Indica se houve reset no dia 1º
+    status: getProgressStatus(effectiveHoursWorked, MONTHLY_MIN, MONTHLY_TARGET, isOnTrack)
   }
 }
 
@@ -255,6 +346,8 @@ export const workingDaysService = {
   getWorkingDaysInMonth,
   getRemainingWorkingDays,
   getWorkedDaysInMonth,
+  getActualWorkedDaysInMonth,
+  getRemainingDaysInMonth,
   getMonthlyProgress,
   getHolidays
 }
