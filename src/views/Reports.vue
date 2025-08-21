@@ -165,7 +165,7 @@
             <div v-for="(dayData, date) in displayData" :key="date" class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h5 mb-0">{{ date }}</h3>
-                <span class="badge bg-primary rounded-pill">{{ formatHoursFromMinutes(dayData.totalHours) }} horas</span>
+                <span class="badge bg-primary rounded-pill">{{ dayData.totalHours.toFixed(2) }} horas</span>
               </div>
               
               <div class="table-responsive">
@@ -520,10 +520,15 @@ const formatDate = (date) => {
 
 
 const formatHoursFromMinutes = (totalMinutes) => {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const decimalHours = hours + (minutes / 60);
-  return decimalHours.toFixed(2);
+  if (!totalMinutes) return '0.00'
+  
+  // Conversão CORRETA para formato H.MM
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  
+  // Formato H.MM onde MM são os minutos reais
+  const result = hours + (minutes / 100)
+  return result.toFixed(2)
 }
 
 
