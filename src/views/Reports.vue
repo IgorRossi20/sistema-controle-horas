@@ -53,9 +53,31 @@
           </h5>
         </div>
         <div class="row g-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <label for="specific-date" class="form-label">Data Específica</label>
+            <div class="input-group">
+              <input 
+                id="specific-date" 
+                type="date" 
+                v-model="selectedSpecificDate" 
+                class="form-control"
+                placeholder="Selecione uma data"
+              />
+              <button 
+                v-if="selectedSpecificDate" 
+                @click="clearSpecificDate" 
+                class="btn btn-outline-secondary" 
+                type="button"
+                title="Limpar filtro de data"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="col-md-3">
             <label for="month" class="form-label">Mês</label>
-            <select id="month" v-model="selectedMonth" class="form-select" required>
+            <select id="month" v-model="selectedMonth" class="form-select" :disabled="!!selectedSpecificDate">
               <option value="" disabled>Selecione o mês</option>
               <option v-for="(month, index) in months" :key="index" :value="index + 1">
                 {{ month }}
@@ -63,9 +85,9 @@
             </select>
           </div>
           
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label for="year" class="form-label">Ano</label>
-            <select id="year" v-model="selectedYear" class="form-select" required>
+            <select id="year" v-model="selectedYear" class="form-select" :disabled="!!selectedSpecificDate">
               <option value="" disabled>Selecione o ano</option>
               <option v-for="year in years" :key="year" :value="year">
                 {{ year }}
@@ -236,6 +258,7 @@ const selectedMonth = ref('')
 const selectedYear = ref('')
 const selectedProject = ref('')
 const selectedReportType = ref('detailed')
+const selectedSpecificDate = ref('')
 
 // Lista de meses
 const months = [
@@ -436,15 +459,29 @@ const loadData = async () => {
 }
 
 const generateReport = async () => {
-  if (!selectedMonth.value || !selectedYear.value) return
+  // Verificar se temos data específica ou mês/ano
+  if (!selectedSpecificDate.value && (!selectedMonth.value || !selectedYear.value)) {
+    alert('Selecione uma data específica ou um mês e ano para gerar o relatório.')
+    return
+  }
   
   loading.value = true
   reportGenerated.value = true
   
   try {
     const userId = userStore.userId
-    const startDate = new Date(selectedYear.value, selectedMonth.value - 1, 1)
-    const endDate = new Date(selectedYear.value, selectedMonth.value, 0) // Último dia do mês
+    let startDate, endDate
+    
+    if (selectedSpecificDate.value) {
+      // Filtrar por data específica
+      const specificDate = new Date(selectedSpecificDate.value)
+      startDate = new Date(specificDate.getFullYear(), specificDate.getMonth(), specificDate.getDate(), 0, 0, 0)
+      endDate = new Date(specificDate.getFullYear(), specificDate.getMonth(), specificDate.getDate(), 23, 59, 59)
+    } else {
+      // Filtrar por mês/ano
+      startDate = new Date(selectedYear.value, selectedMonth.value - 1, 1)
+      endDate = new Date(selectedYear.value, selectedMonth.value, 0, 23, 59, 59) // Último dia do mês
+    }
     
     // Buscar registros de tempo para o período selecionado
     const entries = await timeEntriesService.getTimeEntriesByPeriod(userId, startDate, endDate)
@@ -455,6 +492,20 @@ const generateReport = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const clearSpecificDate = () => {
+  selectedSpecificDate.value = ''
+}
+
+const formatReportPeriod = () => {
+  if (selectedSpecificDate.value) {
+    const date = new Date(selectedSpecificDate.value)
+    return date.toLocaleDateString('pt-BR')
+  } else if (selectedMonth.value && selectedYear.value) {
+    return `${months[selectedMonth.value - 1]} de ${selectedYear.value}`
+  }
+  return 'Período Selecionado'
 }
 
 const formatDate = (date) => {
