@@ -589,14 +589,146 @@ h6, .h6 {
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
-  .container {
-    padding-left: 15px;
-    padding-right: 15px;
+
+/* Breakpoints:
+   - xs: 0-575px (mobile portrait)
+   - sm: 576-767px (mobile landscape)
+   - md: 768-991px (tablet)
+   - lg: 992-1199px (desktop)
+   - xl: 1200px+ (large desktop)
+*/
+
+/* Base responsive adjustments */
+.container {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Mobile First - Extra Small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+  body {
+    font-size: 14px;
+  }
+  
+  h1, .h1 {
+    font-size: 1.75rem;
+  }
+  
+  h2, .h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3, .h3 {
+    font-size: 1.25rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.75rem;
+    text-align: center;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .page-header h1 {
+    font-size: 1.5rem;
+    text-align: center;
   }
   
   .modern-card {
     margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .gradient-card .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .metric-unit {
+    font-size: 0.8rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Form adjustments */
+  .form-control {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .form-select {
+    font-size: 16px;
+  }
+  
+  /* Table responsiveness */
+  .table-responsive {
+    border: none;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  /* Navigation adjustments */
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .d-flex.justify-content-between .btn {
+    width: 100%;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .dashboard-title {
+    font-size: 2rem;
+  }
+  
+  .metric-value {
+    font-size: 1.75rem;
+  }
+  
+  .gradient-card .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .container {
+    max-width: 720px;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
   }
   
   .gradient-card .card-icon {
@@ -605,27 +737,98 @@ h6, .h6 {
     font-size: 1.2rem;
   }
   
-  .metric-value {
-    font-size: 2rem;
+  /* Tablet specific adjustments */
+  .row.g-3 > .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
   }
-  
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+/* General mobile optimizations (768px and below) */
+@media (max-width: 768px) {
   /* Reduce animations on mobile for performance */
   .modern-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
   }
   
   .btn:hover {
-    transform: translateY(-1px);
+    transform: none;
   }
   
-  /* Disable complex animations on mobile */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
+  /* Improve touch targets */
+  .btn {
+    min-height: 44px;
+  }
+  
+  /* Stack elements vertically */
+  .row.mb-4 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  /* Progress bars */
+  .progress {
+    height: 8px;
+  }
+  
+  /* Alert adjustments */
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Card spacing */
+  .card + .card {
+    margin-top: 1rem;
+  }
+}
+
+/* Accessibility - Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .modern-card:hover {
+    transform: none;
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .navbar,
+  .sidebar {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+  }
+  
+  body {
+    background: white !important;
   }
 }

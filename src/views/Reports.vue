@@ -836,30 +836,318 @@ onMounted(async () => {
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Styles */
+
+/* Mobile Portrait (max-width: 575px) */
+@media (max-width: 575.98px) {
+  .page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
   .page-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .page-header .d-flex {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
+  }
+  
+  /* Filter controls */
+  .report-header {
+    text-align: center;
   }
   
   .report-header .d-flex {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
   }
   
+  .row.g-3 .col-md-3,
+  .row.g-3 .col-md-4,
+  .row.g-3 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Button groups */
   .btn-group {
     width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
   .btn-group .btn {
+    width: 100%;
+    margin: 0;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Export buttons */
+  .btn-modern {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Chart container */
+  .chart-container {
+    padding: 1rem;
+    margin: 0 -15px;
+  }
+  
+  .chart-container canvas {
+    max-height: 250px !important;
+  }
+  
+  /* Table responsiveness */
+  .table-responsive {
+    border: none;
+    margin: 0 -15px;
+    font-size: 0.8rem;
+  }
+  
+  .table {
+    margin-bottom: 0;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+    border-width: 1px;
+    font-size: 0.75rem;
+  }
+  
+  .table th {
+    font-weight: 600;
+    background-color: var(--primary-color);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  /* Hide less important columns on mobile */
+  .table .d-none.d-md-table-cell {
+    display: none !important;
+  }
+  
+  /* Summary cards */
+  .modern-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .metric-label {
+    font-size: 0.8rem;
+  }
+  
+  /* Alert adjustments */
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    text-align: center;
+    margin: 1rem 0;
+  }
+  
+  /* Loading states */
+  .text-center {
+    padding: 2rem 1rem;
+  }
+  
+  .spinner-border {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+/* Mobile Landscape (576px to 767px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .page-header .d-flex {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .report-header .d-flex {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .btn-group {
+    width: auto;
+    flex-direction: row;
+  }
+  
+  .btn-group .btn {
+    width: auto;
     flex: 1;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.6rem 0.4rem;
+  }
+  
+  .chart-container canvas {
+    max-height: 300px !important;
+  }
+}
+
+/* Tablet (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  /* Adjust filter grid for tablets */
+  .row.g-3 .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  
+  .row.g-3 .col-md-4 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  
+  .row.g-3 .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .chart-container canvas {
+    max-height: 350px !important;
+  }
+}
+
+/* General mobile optimizations (768px and below) */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  .btn {
+    min-height: 44px;
+  }
+  
+  /* Card spacing */
+  .modern-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Better spacing for filters */
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Chart responsiveness */
+  .chart-container {
+    overflow-x: auto;
+  }
+  
+  /* Table improvements */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Summary section */
+  .row .col-md-3,
+  .row .col-md-4,
+  .row .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  /* Export section */
+  .export-section {
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  .export-section .btn {
+    margin: 0.25rem;
+    width: calc(50% - 0.5rem);
+  }
+}
+
+/* Landscape orientation specific */
+@media (max-height: 500px) and (orientation: landscape) {
+  .page-header {
+    margin-bottom: 1rem;
+  }
+  
+  .modern-card {
+    margin-bottom: 0.5rem;
+  }
+  
+  .chart-container {
+    padding: 0.5rem;
+  }
+  
+  .chart-container canvas {
+    max-height: 200px !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover {
+    transform: none;
+  }
+  
+  .modern-card:hover {
+    transform: none;
+  }
+  
+  .btn-group .btn:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets for table actions */
+  .table .btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Print optimizations */
+@media print {
+  .page-header,
+  .report-header,
+  .btn,
+  .btn-group {
+    display: none !important;
+  }
+  
+  .chart-container,
+  .table-responsive {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .modern-card {
+    break-inside: avoid;
+    margin-bottom: 1rem;
   }
 }
 </style>

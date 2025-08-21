@@ -588,7 +588,7 @@ export default {
            {
              id: 'test-entry-1',
              projectId: projects.value[0].id,
-             date: today.toISOString().split('T')[0],
+             date: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
              hours: 4,
              description: 'Desenvolvimento de funcionalidades',
              userId: userStore.userId,
@@ -597,7 +597,7 @@ export default {
            {
              id: 'test-entry-2',
              projectId: projects.value[0].id,
-             date: new Date(today.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+             date: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1),
              hours: 6,
              description: 'Testes e correções',
              userId: userStore.userId,
@@ -1141,10 +1141,149 @@ canvas {
   transform: translateY(-2px);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Styles */
+
+/* Mobile Portrait (max-width: 575px) */
+@media (max-width: 575.98px) {
+  .dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .dashboard-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .dashboard-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  /* Cards adjustments */
+  .modern-card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+    position: relative;
+  }
+  
+  .card-icon {
+    position: static;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    background: rgba(74, 144, 226, 0.1);
+    color: var(--primary-color);
+  }
+  
+  .card-icon.secondary {
+    background: var(--brand-gradient);
+    color: white;
+  }
+  
+  .gradient-card .card-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  .metric-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .metric-unit {
+    font-size: 0.8rem;
+  }
+  
+  .metric-period {
+    font-size: 0.8rem;
+  }
+  
+  /* Progress section */
+  .section-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .progress-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  /* Stats grid */
+  .row.text-center .col-md-3 {
+    margin-bottom: 1rem;
+  }
+  
+  .row.text-center .h5 {
+    font-size: 1.1rem;
+  }
+  
+  /* Alerts */
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  
+  /* Charts */
+  canvas {
+    min-height: 200px;
+    height: 200px;
+  }
+  
+  /* Action buttons */
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Quick actions */
+  .list-group-item {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile Landscape (576px to 767px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
   .dashboard-title {
     font-size: 2rem;
+  }
+  
+  .metric-value {
+    font-size: 1.75rem;
+  }
+  
+  .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+  
+  canvas {
+    min-height: 250px;
+    height: 250px;
+  }
+}
+
+/* Tablet (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .dashboard-title {
+    font-size: 2.25rem;
   }
   
   .metric-value {
@@ -1157,10 +1296,71 @@ canvas {
     font-size: 1.2rem;
   }
   
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  /* Adjust grid for tablets */
+  .row.text-center .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    margin-bottom: 1rem;
+  }
+  
+  canvas {
+    min-height: 280px;
+    height: 280px;
+  }
+}
+
+/* General mobile optimizations (768px and below) */
+@media (max-width: 768px) {
+  /* Reduce hover effects for touch devices */
+  .modern-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+  
+  /* Improve touch targets */
+  .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Stack progress stats vertically */
+  .row.text-center {
+    text-align: center;
+  }
+  
+  .row.text-center .col-md-3.col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    margin-bottom: 1rem;
+  }
+  
+  /* Improve readability */
+  .small {
+    font-size: 0.8rem;
+  }
+  
+  /* Chart responsiveness */
+  .chart-card .card-body {
+    padding: 1rem;
+  }
+}
+
+/* Landscape orientation specific */
+@media (max-height: 500px) and (orientation: landscape) {
+  .dashboard-header {
+    margin-bottom: 1rem;
+  }
+  
+  .modern-card {
+    margin-bottom: 0.5rem;
+  }
+  
+  canvas {
+    min-height: 150px;
+    height: 150px;
   }
 }
 </style>

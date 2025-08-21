@@ -965,24 +965,240 @@ onUnmounted(() => {
   backdrop-filter: blur(8px);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Styles */
+
+/* Mobile Portrait (max-width: 575px) */
+@media (max-width: 575.98px) {
+  .page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
   .page-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .page-header .d-flex {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 1rem;
   }
   
   .btn-modern {
     width: 100%;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Filter card */
+  .filter-header {
+    text-align: center;
+  }
+  
+  .row.g-3 .col-md-3,
+  .row.g-3 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Table responsiveness */
+  .table-responsive {
+    border: none;
+    margin: 0 -15px;
+  }
+  
+  .table {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+    border-width: 1px;
+  }
+  
+  .table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  /* Hide less important columns on mobile */
+  .table .d-none.d-md-table-cell {
+    display: none !important;
+  }
+  
+  /* Action buttons in table */
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  /* Modal adjustments */
+  .modern-modal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
   }
   
   .modern-modal .modal-body {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+  
+  .modern-modal .modal-header {
+    padding: 1rem;
+  }
+  
+  .modern-modal .modal-footer {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .modern-modal .modal-footer .btn {
+    width: 100%;
+  }
+  
+  /* Form in modal */
+  .modal .row.mb-3 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .modal textarea {
+    min-height: 80px;
+  }
+  
+  /* Total hours display */
+  .text-end {
+    text-align: center !important;
+    margin-top: 1rem;
+  }
+}
+
+/* Mobile Landscape (576px to 767px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .page-header .d-flex {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .btn-modern {
+    width: auto;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.6rem 0.4rem;
+  }
+}
+
+/* Tablet (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  /* Adjust filter grid for tablets */
+  .row.g-3 .col-md-3 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  
+  .row.g-3 .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* General mobile optimizations (768px and below) */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  .btn {
+    min-height: 44px;
+  }
+  
+  /* Card spacing */
+  .modern-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Better spacing for filters */
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Pagination adjustments */
+  .pagination {
+    justify-content: center;
+  }
+  
+  .pagination .page-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Alert adjustments */
+  .alert {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  
+  /* Loading states */
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* Landscape orientation specific */
+@media (max-height: 500px) and (orientation: landscape) {
+  .page-header {
+    margin-bottom: 1rem;
+  }
+  
+  .modern-card {
+    margin-bottom: 0.5rem;
+  }
+  
+  .modern-modal .modal-dialog {
+    margin: 0.5rem;
+  }
+  
+  .modern-modal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover {
+    transform: none;
+  }
+  
+  .modern-card:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  .table .btn {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
