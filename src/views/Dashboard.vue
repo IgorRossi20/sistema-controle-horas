@@ -330,41 +330,13 @@ export default {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0)
     
-    // Filtrar entradas do mês atual
+    // Entradas do mês atual (já filtradas no backend)
     const currentMonthEntries = computed(() => {
       try {
-        if (!timeEntries.value || !Array.isArray(timeEntries.value) || timeEntries.value.length === 0) {
+        if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
           return []
         }
-        
-        return timeEntries.value.filter(entry => {
-          try {
-            if (!entry || typeof entry !== 'object' || !entry.date) {
-              return false
-            }
-            
-            let entryDate
-            if (entry.date instanceof Date) {
-              entryDate = entry.date
-            } else if (typeof entry.date === 'string') {
-              entryDate = new Date(entry.date)
-            } else if (entry.date && typeof entry.date === 'object' && entry.date.seconds) {
-              entryDate = new Date(entry.date.seconds * 1000)
-            } else {
-              entryDate = new Date(entry.date)
-            }
-            
-            // Verificar se a data é válida
-            if (isNaN(entryDate.getTime())) {
-              return false
-            }
-            
-            return entryDate >= firstDayOfMonth && entryDate <= lastDayOfMonth
-          } catch (error) {
-            console.warn('Erro ao processar entrada:', entry, error)
-            return false
-          }
-        })
+        return timeEntries.value
       } catch (error) {
         console.error('Erro em currentMonthEntries:', error)
         return []
@@ -655,10 +627,17 @@ export default {
         console.log('🔄 Iniciando carregamento de dados...')
         const userId = userStore.userId
         
-        // Carregar projetos e registros de tempo
+        // Calcular período do mês atual
+        const currentDate = new Date()
+        const currentMonth = currentDate.getMonth()
+        const currentYear = currentDate.getFullYear()
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
+        
+        // Carregar projetos e registros de tempo do mês atual
         const [projectsData, timeEntriesData] = await Promise.all([
           projectsService.getProjects(userId),
-          timeEntriesService.getTimeEntries(userId)
+          timeEntriesService.getTimeEntriesByPeriod(userId, firstDayOfMonth, lastDayOfMonth)
         ])
         
         // Verificar se os dados são arrays válidos
