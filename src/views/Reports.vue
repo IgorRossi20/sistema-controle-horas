@@ -154,7 +154,7 @@
                 <p class="mb-1"><strong>Empresa:</strong> Empresa Exemplo</p>
               </div>
               <div class="col-md-6 text-md-end">
-                <p class="mb-1"><strong>Total de Horas:</strong> {{ totalHours }}</p>
+                <p class="mb-1"><strong>Total de Horas:</strong> {{ formatHoursToText(totalHours) }}</p>
                 <p class="mb-1"><strong>Total de Projetos:</strong> {{ (uniqueProjects && uniqueProjects.length) || 0 }}</p>
               </div>
             </div>
@@ -165,7 +165,7 @@
             <div v-for="(dayData, date) in displayData" :key="date" class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h5 mb-0">{{ date }}</h3>
-                <span class="badge bg-primary rounded-pill">{{ dayData.totalHours.toFixed(2) }} horas</span>
+                <span class="badge bg-primary rounded-pill">{{ formatHoursToText(dayData.totalHours) }}</span>
               </div>
               
               <div class="table-responsive">
@@ -204,7 +204,7 @@
             <div v-for="(projectData, projectId) in displayData" :key="projectId" class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h3 class="h5 mb-0">{{ getProjectName(projectId) }}</h3>
-                <span class="badge bg-primary rounded-pill">{{ projectTotalHours(projectId) }} horas</span>
+                <span class="badge bg-primary rounded-pill">{{ formatHoursToText(projectTotalHours(projectId)) }}</span>
               </div>
               
               <div class="table-responsive">
@@ -220,7 +220,7 @@
                     <tr v-for="entry in projectData" :key="entry.id">
                       <td>{{ formatDate(entry.date) }}</td>
                       <td>{{ entry.description }}</td>
-                      <td class="text-end">{{ entry.hours }}</td>
+                      <td class="text-end">{{ formatHoursToText(entry.hours) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -243,6 +243,7 @@ import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
 import { exportService } from '../services/export'
+import { formatHoursToText } from '../utils/formatHours'
 
 const userStore = useUserStore()
 

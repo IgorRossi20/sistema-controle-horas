@@ -14,8 +14,7 @@
             </div>
             <h5 class="card-title">Resumo do Mês</h5>
             <div class="metric-container">
-              <h2 class="metric-value">{{ totalHoursMonth }}</h2>
-              <span class="metric-unit">horas</span>
+              <h2 class="metric-value">{{ formatHoursToText(totalHoursMonth) }}</h2>
             </div>
             <p class="metric-period">{{ currentMonthName }}</p>
           </div>
@@ -55,11 +54,11 @@
             <div v-if="monthlyProgress" class="mt-3">
               <!-- Barra de Progresso -->
                <div class="d-flex justify-content-between align-items-center mb-2">
-                 <span class="fw-bold">{{ monthlyProgress.hoursWorked }} / {{ monthlyProgress.targetHours }} horas</span>
+                 <span class="fw-bold">{{ formatHoursToText(monthlyProgress.hoursWorked) }} / {{ formatHoursToText(monthlyProgress.targetHours) }}</span>
                  <span class="badge" :class="getProgressBadgeClass(monthlyProgress.status)">{{ getProgressStatusText(monthlyProgress.status) }}</span>
                </div>
                <div class="small text-muted mb-2">
-                 Faixa ideal: {{ monthlyProgress.monthlyMin }}-{{ monthlyProgress.monthlyTarget }} horas
+                 Faixa ideal: {{ formatHoursToText(monthlyProgress.monthlyMin) }} - {{ formatHoursToText(monthlyProgress.monthlyTarget) }}
                </div>
               
               <div class="progress mb-3" style="height: 10px;">
@@ -199,7 +198,7 @@
                   <tr v-for="entry in recentEntries" :key="entry.id" class="cursor-pointer" @click="viewEntry(entry.id)">
                     <td>{{ formatDate(entry.date) }}</td>
                     <td>{{ getProjectName(entry.projectId) }}</td>
-                    <td>{{ entry.hours }}</td>
+                    <td>{{ formatHoursToText(entry.hours) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -244,6 +243,7 @@ import { useUserStore } from '../store/user'
 import { timeEntriesService, projectsService } from '../services/firebase'
 import { Chart, registerables } from 'chart.js'
 import { workingDaysService } from '../services/workingDays'
+import { formatHoursToText } from '../utils/formatHours'
 
 Chart.register(...registerables)
 
@@ -930,7 +930,8 @@ export default {
       goToProjects,
       getProgressBadgeClass,
       getProgressBarClass,
-      getProgressStatusText
+      getProgressStatusText,
+      formatHoursToText
     }
   }
 }

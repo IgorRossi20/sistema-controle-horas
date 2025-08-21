@@ -197,6 +197,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
 import { projectsService } from '../services/projects'
 import { timeEntriesService } from '../services/timeEntries'
+import { formatHoursToText } from '../utils/formatHours'
 
 const userStore = useUserStore()
 
@@ -290,7 +291,7 @@ const getProjectHours = (projectId) => {
     return sum + parseFloat(entry.hours)
   }, 0)
   
-  return totalHours.toFixed(2)
+  return formatHoursToText(totalHours)
 }
 
 const hasTimeEntries = (projectId) => {

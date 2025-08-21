@@ -105,7 +105,7 @@
                       </span>
                       <span v-else class="text-muted small">-</span>
                     </td>
-                  <td>{{ entry.hours }}h</td>
+                  <td>{{ formatHoursToText(entry.hours) }}</td>
                   <td class="text-truncate-2" style="max-width: 350px;">
                     {{ entry.description }}
                   </td>
@@ -126,7 +126,7 @@
                   <td colspan="3" class="text-end">
                     {{ filters.specificDate ? `Total do Dia (${formatDateBR(filters.specificDate)}):` : `Total do Mês (${months[filters.month]}):` }}
                   </td>
-                  <td>{{ totalHours }}</td>
+                  <td>{{ formatHoursToText(totalHours) }}</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -337,10 +337,11 @@ input[type="time"]::-ms-clear {
 </style>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
+import { formatHoursToText } from '../utils/formatHours'
 
 
 
