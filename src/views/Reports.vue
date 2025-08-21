@@ -374,7 +374,7 @@ const totalHours = computed(() => {
   // Converter minutos de volta para formato H.MM
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
-  const decimalHours = hours + (minutes / 100);
+  const decimalHours = hours + (minutes / 60);
   
   return decimalHours.toFixed(2);
 })
@@ -528,17 +528,12 @@ const formatDate = (date) => {
   return d.toLocaleDateString('pt-BR')
 }
 
-const formatReportPeriod = () => {
-  if (!selectedMonth.value || !selectedYear.value) return ''
-  
-  const month = months[selectedMonth.value - 1]
-  return `${month} de ${selectedYear.value}`
-}
+
 
 const formatHoursFromMinutes = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  const decimalHours = hours + (minutes / 100);
+  const decimalHours = hours + (minutes / 60);
   return decimalHours.toFixed(2);
 }
 
@@ -585,7 +580,7 @@ const projectTotalHours = (projectId) => {
   // Converter minutos de volta para formato H.MM
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
-  const decimalHours = hours + (minutes / 100);
+  const decimalHours = hours + (minutes / 60);
   
   return decimalHours.toFixed(2);
 }

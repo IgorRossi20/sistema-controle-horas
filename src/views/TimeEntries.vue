@@ -482,7 +482,7 @@ const totalHours = computed(() => {
   // Converter minutos de volta para formato H.MM
   const hours = Math.floor(total / 60);
   const minutes = total % 60;
-  const decimalHours = hours + (minutes / 100);
+  const decimalHours = hours + (minutes / 60);
   
   return decimalHours.toFixed(2);
 })
@@ -509,7 +509,7 @@ const calculatedHours = computed(() => {
   const minutes = diffMinutes % 60
   
   // Formato: H.MM (onde MM são os minutos como decimal)
-  const decimalHours = hours + (minutes / 100)
+  const decimalHours = hours + (minutes / 60)
   
   return decimalHours.toFixed(2)
 })
