@@ -6,7 +6,7 @@
     </div>
     
     <div class="row mb-4 stagger-children">
-      <div class="col-md-6 mb-3 mb-md-0">
+      <div class="col-12">
         <div class="card modern-card gradient-card h-100 hover-lift transition-all">
           <div class="card-body">
             <div class="card-icon">
@@ -17,22 +17,6 @@
               <h2 class="metric-value">{{ formatHoursToText(totalHoursMonth) }}</h2>
             </div>
             <p class="metric-period">{{ currentMonthName }}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="col-md-6">
-        <div class="card modern-card secondary-card h-100 hover-lift transition-all">
-          <div class="card-body">
-            <div class="card-icon secondary">
-              <i class="bi bi-folder"></i>
-            </div>
-            <h5 class="card-title">Projetos Ativos</h5>
-            <div class="metric-container">
-              <h2 class="metric-value">{{ (activeProjects && activeProjects.length) || 0 }}</h2>
-              <span class="metric-unit">projetos</span>
-            </div>
-            <p class="metric-period">com horas registradas</p>
           </div>
         </div>
       </div>
@@ -727,11 +711,24 @@ export default {
             plugins: {
               legend: {
                 display: true
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const value = context.parsed.y
+                    return `${context.dataset.label}: ${formatHoursToText(value)}`
+                  }
+                }
               }
             },
             scales: {
               y: {
-                beginAtZero: true
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return formatHoursToText(value)
+                  }
+                }
               }
             }
           }

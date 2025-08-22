@@ -160,18 +160,50 @@
               </div>
               
               <div class="mb-3">
-                <label for="entry-project" class="form-label">Projeto</label>
-                <select 
-                  id="entry-project" 
-                  v-model="entryForm.projectId" 
-                  class="form-select" 
-                  required
-                >
-                  <option value="" disabled>Selecione um projeto</option>
-                  <option v-for="project in projects" :key="project.id" :value="project.id">
-                    {{ project.name }}
-                  </option>
-                </select>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <label for="entry-project" class="form-label mb-0">Projeto</label>
+                  <button 
+                    type="button" 
+                    class="btn btn-outline-primary btn-sm" 
+                    @click="showProjectModal = true"
+                    title="Cadastrar novo projeto"
+                  >
+                    <i class="bi bi-plus-circle me-1"></i> Novo Projeto
+                  </button>
+                </div>
+                <div class="position-relative">
+                  <input 
+                    type="text" 
+                    v-model="projectSearchText" 
+                    @focus="showProjectDropdown = true"
+                    @blur="hideProjectDropdown"
+                    @input="filterProjects"
+                    @keydown="handleProjectKeydown"
+                    class="form-control" 
+                    placeholder="Digite o nome do projeto ou clique para ver todos..."
+                    autocomplete="off"
+                    required
+                  />
+                  <div 
+                    v-if="showProjectDropdown" 
+                    class="dropdown-menu show w-100 position-absolute" 
+                    style="max-height: 200px; overflow-y: auto; z-index: 1050;"
+                  >
+                    <div 
+                      v-for="(project, index) in filteredProjects" 
+                      :key="project.id" 
+                      @mousedown="selectProject(project)"
+                      :class="['dropdown-item', { 'active': index === selectedProjectIndex }]"
+                      style="cursor: pointer;"
+                    >
+                      {{ project.name }}
+                    </div>
+                    <div v-if="filteredProjects.length === 0" class="dropdown-item text-muted">
+                      Nenhum projeto encontrado
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted mt-1 d-block">{{ filteredProjects.length }} projeto(s) disponível(eis)</small>
               </div>
               
               <div class="row mb-3">
@@ -265,6 +297,54 @@
     </div>
     <div class="modal-backdrop fade show" v-if="showDeleteModal"></div>
 
+    <!-- Modal de cadastro de projeto -->
+    <div class="modal fade" :class="{ 'show d-block': showProjectModal }" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content modern-modal">
+          <div class="modal-header">
+            <h5 class="modal-title">Novo Projeto</h5>
+            <button type="button" class="btn-close" @click="closeProjectModal"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveProject">
+              <div class="mb-3">
+                <label for="project-name" class="form-label">Nome do Projeto</label>
+                <input 
+                  type="text" 
+                  id="project-name" 
+                  v-model="projectForm.name" 
+                  class="form-control" 
+                  placeholder="Digite o nome do projeto"
+                  required
+                  maxlength="100"
+                />
+              </div>
+              
+              <div class="mb-3">
+                <label for="project-description" class="form-label">Descrição (opcional)</label>
+                <textarea 
+                  id="project-description" 
+                  v-model="projectForm.description" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="Descrição do projeto"
+                  maxlength="500"
+                ></textarea>
+              </div>
+              
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary transition-all hover-scale" :disabled="projectFormLoading">
+                  <span v-if="projectFormLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Salvar Projeto
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show" v-if="showProjectModal"></div>
+
   </div>
 </template>
 
@@ -339,7 +419,7 @@ input[type="time"]::-ms-clear {
 </style>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
@@ -366,6 +446,15 @@ const showAddModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const currentEntryId = ref(null)
+const projectSearchText = ref('')
+const showProjectDropdown = ref(false)
+const selectedProjectIndex = ref(-1)
+const showProjectModal = ref(false)
+const projectFormLoading = ref(false)
+const projectForm = reactive({
+  name: '',
+  description: ''
+})
 
 // Lista de meses
 const months = [
@@ -401,6 +490,30 @@ const entryForm = ref(resetForm())
 const entryToDelete = ref(null)
 
 // Computed properties
+const filteredProjects = computed(() => {
+  if (!projects.value || !Array.isArray(projects.value)) {
+    return []
+  }
+  
+  let filtered = projects.value.filter(project => {
+    if (!project || !project.name) return false
+    
+    // Filtrar por texto de busca
+    if (projectSearchText.value) {
+      return project.name.toLowerCase().includes(projectSearchText.value.toLowerCase())
+    }
+    
+    return true
+  })
+  
+  // Ordenar alfabeticamente
+  return filtered.sort((a, b) => {
+    const nameA = a.name ? a.name.toLowerCase() : ''
+    const nameB = b.name ? b.name.toLowerCase() : ''
+    return nameA.localeCompare(nameB)
+  })
+})
+
 const filteredEntries = computed(() => {
   let result = [...timeEntries.value]
   
@@ -647,12 +760,105 @@ const formatDatePlaceholder = () => {
   return formatDateBR(new Date())
 }
 
+const selectProject = (project) => {
+    entryForm.projectId = project.id
+    projectSearchText.value = project.name
+    showProjectDropdown.value = false
+    selectedProjectIndex.value = -1
+  }
+
+const hideProjectDropdown = () => {
+  setTimeout(() => {
+    showProjectDropdown.value = false
+    selectedProjectIndex.value = -1
+  }, 150)
+}
+
+const filterProjects = () => {
+  selectedProjectIndex.value = -1
+  showProjectDropdown.value = true
+}
+
+const handleProjectKeydown = (event) => {
+  if (!showProjectDropdown.value) return
+  
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      selectedProjectIndex.value = Math.min(selectedProjectIndex.value + 1, filteredProjects.value.length - 1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      selectedProjectIndex.value = Math.max(selectedProjectIndex.value - 1, -1)
+      break
+    case 'Enter':
+      event.preventDefault()
+      if (selectedProjectIndex.value >= 0 && filteredProjects.value[selectedProjectIndex.value]) {
+        selectProject(filteredProjects.value[selectedProjectIndex.value])
+      }
+      break
+    case 'Escape':
+      showProjectDropdown.value = false
+      selectedProjectIndex.value = -1
+      break
+  }
+}
+
+const closeProjectModal = () => {
+  showProjectModal.value = false
+  projectForm.name = ''
+  projectForm.description = ''
+}
+
+const saveProject = async () => {
+  if (!projectForm.name.trim()) {
+    alert('Por favor, digite o nome do projeto')
+    return
+  }
+
+  try {
+    projectFormLoading.value = true
+    
+    const newProject = {
+      name: projectForm.name.trim(),
+      description: projectForm.description.trim(),
+      userId: userStore.user.uid,
+      createdAt: new Date().toISOString(),
+      isActive: true
+    }
+
+    const projectId = await projectsService.createProject(newProject)
+    
+    // Adicionar o novo projeto à lista local
+    const createdProject = { id: projectId, ...newProject }
+    projects.value.push(createdProject)
+    
+    // Selecionar automaticamente o projeto recém-criado
+    entryForm.projectId = projectId
+    projectSearchText.value = newProject.name
+    
+    closeProjectModal()
+    
+    // Mostrar mensagem de sucesso
+    alert('Projeto criado com sucesso!')
+    
+  } catch (error) {
+    console.error('Erro ao criar projeto:', error)
+    alert('Erro ao criar projeto. Tente novamente.')
+  } finally {
+    projectFormLoading.value = false
+  }
+}
+
 const closeModal = () => {
   console.log('Fechando modal...')
   showAddModal.value = false
   isEditing.value = false
   currentEntryId.value = null
   entryForm.value = resetForm()
+  projectSearchText.value = '' // Limpar filtro de busca
+  showProjectDropdown.value = false
+  selectedProjectIndex.value = -1
   console.log('Modal fechado, showAddModal:', showAddModal.value)
 }
 
@@ -678,6 +884,12 @@ const editEntry = (entry) => {
     endTime: entry.endTime || '',
     hours: entry.hours,
     description: entry.description
+  }
+  
+  // Definir o nome do projeto no campo de busca
+  const project = projects.value.find(p => p.id === entry.projectId)
+  if (project) {
+    projectSearchText.value = project.name
   }
   
   showAddModal.value = true
