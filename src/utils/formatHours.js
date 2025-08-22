@@ -65,3 +65,34 @@ export function formatHoursToShortText(decimalHours) {
     return `${hours}h${minutes}min`
   }
 }
+
+// Função para formatar datas no padrão brasileiro dd/mm/aaaa
+export function formatDateBR(date) {
+  if (!date) return 'Data inválida'
+  
+  let d
+  if (date instanceof Date) {
+    d = date
+  } else if (typeof date === 'string') {
+    d = new Date(date)
+  } else if (date && date.seconds) {
+    // Timestamp do Firebase
+    d = new Date(date.seconds * 1000)
+  } else {
+    d = new Date(date)
+  }
+  
+  // Verificar se a data é válida
+  if (isNaN(d.getTime())) {
+    return 'Data inválida'
+  }
+  
+  return d.toLocaleDateString('pt-BR')
+}
+
+// Função para formatar string de data YYYY-MM-DD para dd/mm/aaaa
+export function formatDateStringBR(dateString) {
+  if (!dateString) return ''
+  const date = new Date(dateString + 'T00:00:00')
+  return date.toLocaleDateString('pt-BR')
+}

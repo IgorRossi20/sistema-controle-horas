@@ -1,6 +1,7 @@
-import { jsPDF } from 'jspdf'
+import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { formatDateBR } from '../utils/formatHours'
 
 // Serviço para exportação de relatórios
 export const exportService = {
@@ -198,17 +199,7 @@ export const exportService = {
       
       // Adicionar entradas detalhadas
       entries.forEach(entry => {
-        let formattedDate
-        if (entry.date instanceof Date) {
-          formattedDate = entry.date.toLocaleDateString('pt-BR')
-        } else if (typeof entry.date === 'string') {
-          formattedDate = new Date(entry.date).toLocaleDateString('pt-BR')
-        } else if (entry.date && entry.date.seconds) {
-          formattedDate = new Date(entry.date.seconds * 1000).toLocaleDateString('pt-BR')
-        } else {
-          const d = new Date(entry.date)
-          formattedDate = isNaN(d.getTime()) ? 'Data inválida' : d.toLocaleDateString('pt-BR')
-        }
+        const formattedDate = formatDateBR(entry.date)
         
         reportData.push({
           projeto: projectName,
@@ -229,17 +220,7 @@ export const exportService = {
     const groupedByDate = {}
     
     timeEntries.forEach(entry => {
-      let formattedDate
-      if (entry.date instanceof Date) {
-        formattedDate = entry.date.toLocaleDateString('pt-BR')
-      } else if (typeof entry.date === 'string') {
-        formattedDate = new Date(entry.date).toLocaleDateString('pt-BR')
-      } else if (entry.date && entry.date.seconds) {
-        formattedDate = new Date(entry.date.seconds * 1000).toLocaleDateString('pt-BR')
-      } else {
-        const d = new Date(entry.date)
-        formattedDate = isNaN(d.getTime()) ? 'Data inválida' : d.toLocaleDateString('pt-BR')
-      }
+      const formattedDate = formatDateBR(entry.date)
       
       if (!groupedByDate[formattedDate]) {
         groupedByDate[formattedDate] = {

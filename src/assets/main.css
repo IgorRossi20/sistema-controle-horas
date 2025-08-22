@@ -832,3 +832,28 @@ h6, .h6 {
     background: white !important;
   }
 }
+
+/* Configurações de formato de data brasileiro */
+input[type="date"] {
+  color-scheme: light;
+  font-family: inherit;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  background: none;
+  cursor: pointer;
+}
+
+/* Forçar locale brasileiro para inputs de data */
+input[type="date"][lang="pt-BR"] {
+  direction: ltr;
+}
+
+/* Configurações globais de localização */
+html[lang="pt-BR"] input[type="date"] {
+  color-scheme: light;
+}
+
+html[lang="pt-BR"] input[type="time"] {
+  color-scheme: light;
+}

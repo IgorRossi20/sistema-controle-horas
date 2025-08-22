@@ -243,7 +243,7 @@ import { useUserStore } from '../store/user'
 import { timeEntriesService, projectsService } from '../services/firebase'
 import { Chart, registerables } from 'chart.js'
 import { workingDaysService } from '../services/workingDays'
-import { formatHoursToText } from '../utils/formatHours'
+import { formatHoursToText, formatDateBR } from '../utils/formatHours'
 
 Chart.register(...registerables)
 
@@ -507,34 +507,7 @@ export default {
      })
     
     // Formatar data
-    const formatDate = (date) => {
-      try {
-        if (!date) {
-          return 'Data inválida'
-        }
-        
-        let d
-        if (date instanceof Date) {
-          d = date
-        } else if (typeof date === 'string') {
-          d = new Date(date)
-        } else if (date && typeof date === 'object' && date.seconds) {
-          d = new Date(date.seconds * 1000)
-        } else {
-          d = new Date(date)
-        }
-        
-        // Verificar se a data é válida
-        if (isNaN(d.getTime())) {
-          return 'Data inválida'
-        }
-        
-        return d.toLocaleDateString('pt-BR')
-      } catch (error) {
-        console.warn('Erro ao formatar data:', date, error)
-        return 'Data inválida'
-      }
-    }
+    const formatDate = formatDateBR
     
     // Obter nome do projeto
     const getProjectName = (projectId) => {

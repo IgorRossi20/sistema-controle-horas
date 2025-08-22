@@ -262,7 +262,7 @@ import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
 import { exportService } from '../services/export'
-import { formatHoursToText } from '../utils/formatHours'
+import { formatHoursToText, formatDateBR } from '../utils/formatHours'
 
 const userStore = useUserStore()
 
@@ -510,33 +510,14 @@ const clearSpecificDate = () => {
 
 const formatReportPeriod = () => {
   if (selectedSpecificDate.value) {
-    const date = new Date(selectedSpecificDate.value)
-    return date.toLocaleDateString('pt-BR')
+    return formatDateBR(new Date(selectedSpecificDate.value))
   } else if (selectedMonth.value && selectedYear.value) {
     return `${months[selectedMonth.value - 1]} de ${selectedYear.value}`
   }
   return 'Período Selecionado'
 }
 
-const formatDate = (date) => {
-  let d
-  if (date instanceof Date) {
-    d = date
-  } else if (typeof date === 'string') {
-    d = new Date(date)
-  } else if (date && date.seconds) {
-    d = new Date(date.seconds * 1000)
-  } else {
-    d = new Date(date)
-  }
-  
-  // Verificar se a data é válida
-  if (isNaN(d.getTime())) {
-    return 'Data inválida'
-  }
-  
-  return d.toLocaleDateString('pt-BR')
-}
+const formatDate = formatDateBR
 
 
 
@@ -679,6 +660,38 @@ const exportToExcel = async () => {
 
 onMounted(async () => {
   await loadData()
+  
+  // Configurar formato de data brasileiro
+  setTimeout(() => {
+    const dateInputs = document.querySelectorAll('input[type="date"]')
+    dateInputs.forEach(input => {
+      input.setAttribute('lang', 'pt-BR')
+      input.setAttribute('data-format', 'dd/mm/yyyy')
+      
+      // Interceptar o showPicker para configurar o locale
+      if (input.showPicker) {
+        const originalShowPicker = input.showPicker
+        input.showPicker = function() {
+          document.documentElement.setAttribute('lang', 'pt-BR')
+          document.body.setAttribute('lang', 'pt-BR')
+          
+          // Adicionar estilo para forçar formato brasileiro
+          const style = document.createElement('style')
+          style.textContent = `
+            input[type="date"] {
+              color-scheme: light;
+            }
+            input[type="date"]::-webkit-calendar-picker-indicator {
+              background: none;
+            }
+          `
+          document.head.appendChild(style)
+          
+          return originalShowPicker.call(this)
+        }
+      }
+    })
+  }, 100)
 })
 </script>
 

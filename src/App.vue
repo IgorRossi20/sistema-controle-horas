@@ -36,8 +36,6 @@
 
     <main class="app-main">
       <div class="container py-4">
-        <!-- Aviso sobre adblocker -->
-        <AdBlockerWarning />
         
         <router-view />
       </div>
@@ -58,7 +56,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AdBlockerWarning from './components/AdBlockerWarning.vue'
 
 const router = useRouter()
 

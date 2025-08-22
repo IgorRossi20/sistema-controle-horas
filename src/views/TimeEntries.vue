@@ -124,7 +124,7 @@
               <tfoot>
                 <tr class="table-light fw-bold">
                   <td colspan="3" class="text-end">
-                    {{ filters.specificDate ? `Total do Dia (${formatDateBR(filters.specificDate)}):` : `Total do Mês (${months[filters.month]}):` }}
+                    {{ filters.specificDate ? `Total do Dia (${formatDateBRLocal(filters.specificDate)}):` : `Total do Mês (${months[filters.month]}):` }}
                   </td>
                   <td>{{ formatHoursToText(totalHours) }}</td>
                   <td></td>
@@ -154,6 +154,8 @@
                   v-model="entryForm.date" 
                   class="form-control" 
                   required
+                  :placeholder="formatDatePlaceholder()"
+                  title="Formato: dd/mm/aaaa"
                 />
               </div>
               
@@ -341,7 +343,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
-import { formatHoursToText } from '../utils/formatHours'
+import { formatHoursToText, formatDateBR, formatDateStringBR } from '../utils/formatHours'
 
 
 
@@ -377,7 +379,7 @@ const months = [
 const filters = ref({
   month: new Date().getMonth(),
   projectId: '',
-  specificDate: ''
+  specificDate: new Date().toISOString().split('T')[0] // Data de hoje por padrão
 })
 
 // Formulário
@@ -550,25 +552,7 @@ const loadData = async () => {
   }
 }
 
-const formatDate = (date) => {
-  let d
-  if (date instanceof Date) {
-    d = date
-  } else if (typeof date === 'string') {
-    d = new Date(date)
-  } else if (date && date.seconds) {
-    d = new Date(date.seconds * 1000)
-  } else {
-    d = new Date(date)
-  }
-  
-  // Verificar se a data é válida
-  if (isNaN(d.getTime())) {
-    return 'Data inválida'
-  }
-  
-  return d.toLocaleDateString('pt-BR')
-}
+const formatDate = formatDateBR
 
 const formatTime = (time) => {
   if (!time) return ''
@@ -657,10 +641,10 @@ const clearSpecificDate = () => {
   filters.value.specificDate = ''
 }
 
-const formatDateBR = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString + 'T00:00:00')
-  return date.toLocaleDateString('pt-BR')
+const formatDateBRLocal = formatDateStringBR
+
+const formatDatePlaceholder = () => {
+  return formatDateBR(new Date())
 }
 
 const closeModal = () => {
@@ -821,6 +805,37 @@ onMounted(async () => {
     
     // Aguardar um pouco para garantir que os elementos estejam renderizados
     setTimeout(() => {
+      // Configurar inputs de data para formato brasileiro
+      const dateInputs = document.querySelectorAll('input[type="date"]')
+      dateInputs.forEach(input => {
+        input.setAttribute('lang', 'pt-BR')
+        input.setAttribute('data-format', 'dd/mm/yyyy')
+        
+        // Interceptar o showPicker para configurar o locale
+        if (input.showPicker) {
+          const originalShowPicker = input.showPicker
+          input.showPicker = function() {
+            document.documentElement.setAttribute('lang', 'pt-BR')
+            document.body.setAttribute('lang', 'pt-BR')
+            
+            // Adicionar estilo para forçar formato brasileiro
+            const style = document.createElement('style')
+            style.textContent = `
+              input[type="date"] {
+                color-scheme: light;
+              }
+              input[type="date"]::-webkit-calendar-picker-indicator {
+                background: none;
+              }
+            `
+            document.head.appendChild(style)
+            
+            return originalShowPicker.call(this)
+          }
+        }
+      })
+      
+      // Configurar inputs de tempo para formato 24h
       const timeInputs = document.querySelectorAll('input[type="time"]')
       timeInputs.forEach(input => {
         // Configurações para forçar formato 24h
