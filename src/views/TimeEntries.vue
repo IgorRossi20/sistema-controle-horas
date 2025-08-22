@@ -210,7 +210,7 @@
               <div class="mb-3">
                 <label class="form-label">Total de Horas</label>
                 <div class="form-control-plaintext fw-bold text-primary">
-                  {{ calculatedHours }} horas
+                  {{ formatHoursToText(calculatedHours) }}
                 </div>
                 <input type="hidden" v-model="entryForm.hours" />
               </div>
