@@ -1,15 +1,15 @@
-// Função para converter horas H.MM para minutos
-export function hoursToMinutes(hoursStr) {
-  if (!hoursStr) return 0
-  const [hours, minutes] = hoursStr.toString().split('.').map(Number)
-  return (hours || 0) * 60 + (minutes || 0)
+// Função para converter horas decimais para minutos
+export function hoursToMinutes(decimalHours) {
+  if (!decimalHours) return 0
+  const hours = parseFloat(decimalHours)
+  return Math.round(hours * 60)
 }
 
-// Função para converter minutos para H.MM
+// Função para converter minutos para horas decimais
 export function minutesToHours(minutes) {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours}.${mins.toString().padStart(2, '0')}`
+  if (!minutes) return '0.00'
+  const hours = minutes / 60
+  return hours.toFixed(2)
 }
 
 // Função para formatar horas decimais para "X horas e Y minutos"

@@ -2,60 +2,70 @@
 
 ## Como funciona o sistema de horas
 
-O sistema usa um formato especial para armazenar horas: **H.MM** onde:
-- **H** = horas inteiras
-- **MM** = minutos convertidos para centésimos (não são minutos reais!)
+O sistema usa **horas decimais** para armazenar e calcular tempo:
+- **Formato**: Horas decimais (ex: 1.5 = 1h30min)
+- **Cálculo**: totalMinutos ÷ 60 = horas decimais
 
-## Exemplo prático: "24.90 horas"
+## Exemplo prático: "1.5 horas"
 
 ### Interpretação CORRETA:
-- **24** = 24 horas completas
-- **.90** = 90 centésimos = 90% de uma hora = 54 minutos
-- **Total**: 24 horas e 54 minutos
+- **1.5** = 1 hora e meia
+- **Total**: 1 hora e 30 minutos
 
 ### Como é calculado:
 ```javascript
 // Exemplo: 1h30min de trabalho
 const totalMinutes = 90; // 1h30min = 90 minutos
-const hours = Math.floor(totalMinutes / 60); // 1 hora
-const minutes = totalMinutes % 60; // 30 minutos
 
-// Conversão para formato H.MM
-const result = hours + (minutes / 100);
-// result = 1 + (30/100) = 1 + 0.30 = 1.30
+// Conversão para horas decimais
+const hoursDecimal = totalMinutes / 60;
+// hoursDecimal = 90 / 60 = 1.5
 ```
 
-## Tabela de Conversão (Minutos → Centésimos)
+## Tabela de Conversão (Minutos → Horas Decimais)
 
-| Minutos | Centésimos | Formato H.MM |
-|---------|------------|-------------|
-| 0 min   | .00        | X.00        |
-| 6 min   | .10        | X.10        |
-| 12 min  | .20        | X.20        |
-| 15 min  | .25        | X.25        |
-| 18 min  | .30        | X.30        |
-| 24 min  | .40        | X.40        |
-| 30 min  | .50        | X.50        |
-| 36 min  | .60        | X.60        |
-| 45 min  | .75        | X.75        |
-| 54 min  | .90        | X.90        |
-| 60 min  | 1.00       | (X+1).00    |
+| Minutos | Horas Decimais | Explicação |
+|---------|----------------|------------|
+| 0 min   | 0.00          | 0 ÷ 60 = 0.00 |
+| 15 min  | 0.25          | 15 ÷ 60 = 0.25 |
+| 30 min  | 0.50          | 30 ÷ 60 = 0.50 |
+| 45 min  | 0.75          | 45 ÷ 60 = 0.75 |
+| 60 min  | 1.00          | 60 ÷ 60 = 1.00 |
+| 90 min  | 1.50          | 90 ÷ 60 = 1.50 |
+| 120 min | 2.00          | 120 ÷ 60 = 2.00 |
+| 150 min | 2.50          | 150 ÷ 60 = 2.50 |
 
 ## Exemplos Reais:
 
-- **8.25 horas** = 8h + 25% de 1h = 8h15min
-- **4.50 horas** = 4h + 50% de 1h = 4h30min
-- **24.90 horas** = 24h + 90% de 1h = 24h54min
-- **1.75 horas** = 1h + 75% de 1h = 1h45min
+- **0.50 horas** = 30 minutos
+- **1.00 horas** = 1 hora
+- **1.50 horas** = 1 hora e 30 minutos
+- **2.25 horas** = 2 horas e 15 minutos
+- **8.75 horas** = 8 horas e 45 minutos
+
+## Fórmulas de Conversão:
+
+```javascript
+// Minutos para horas decimais
+function minutesToHours(minutes) {
+  return (minutes / 60).toFixed(2);
+}
+
+// Horas decimais para minutos
+function hoursToMinutes(hoursDecimal) {
+  return parseFloat(hoursDecimal) * 60;
+}
+```
 
 ## Por que esse formato?
 
 Este formato permite:
-1. **Cálculos matemáticos simples**: somar 8.25 + 4.50 = 12.75
+1. **Cálculos matemáticos simples**: somar 1.50 + 2.25 = 3.75 horas
 2. **Armazenamento como decimal**: compatível com bancos de dados
 3. **Precisão**: mantém os minutos exatos sem arredondamentos
+4. **Padrão internacional**: amplamente usado em sistemas de controle de horas
 
-## Conversão de volta para H:MM
+## Conversão para exibição H:MM
 
 Para exibir no formato tradicional:
 ```javascript
@@ -65,13 +75,18 @@ function formatHoursToHMM(decimalHours) {
   return `${hours}h${minutes.toString().padStart(2, '0')}min`;
 }
 
-// Exemplo:
-formatHoursToHMM(24.90); // "24h54min"
-formatHoursToHMM(8.25);  // "8h15min"
+// Exemplos:
+// formatHoursToHMM(1.50) = "1h30min"
+// formatHoursToHMM(2.25) = "2h15min"
+// formatHoursToHMM(0.75) = "0h45min"
+// formatHoursToHMM(8.50) = "8h30min"
 ```
 
 ## Resumo
 
-**"24.90 horas" = 24 horas e 54 minutos**
+O sistema agora usa **horas decimais** para todos os cálculos:
+- **1.50 horas** = 1 hora e 30 minutos
+- **2.25 horas** = 2 horas e 15 minutos
+- **0.75 horas** = 45 minutos
 
-Não são "90 minutos", mas sim 90% de uma hora (54 minutos)!
+Fórmula simples: **minutos ÷ 60 = horas decimais**

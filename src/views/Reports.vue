@@ -10,14 +10,16 @@
     </div>
     
     <!-- Ações -->
-    <div class="d-flex justify-content-end mb-4">
-      <div class="btn-group">
+    <div class="d-flex justify-content-end mb-4 actions-container">
+      <div class="btn-group actions-btn-group">
         <button 
           class="btn btn-primary hover-lift transition-all" 
           @click="generateReport" 
           :disabled="loading || !selectedMonth || !selectedYear"
         >
-          <i class="bi bi-file-earmark-text me-2"></i> Gerar Relatório
+          <i class="bi bi-file-earmark-text me-2"></i> 
+          <span class="d-none d-sm-inline">Gerar Relatório</span>
+          <span class="d-sm-none">Gerar</span>
         </button>
         <button 
           type="button" 
@@ -52,8 +54,8 @@
             Filtros do Relatório
           </h5>
         </div>
-        <div class="row g-3">
-          <div class="col-md-3">
+        <div class="row g-3 filters-row">
+          <div class="col-12 col-sm-6 col-lg-3">
             <label for="specific-date" class="form-label">Data Específica</label>
             <div class="input-group">
               <input 
@@ -75,7 +77,7 @@
             </div>
           </div>
           
-          <div class="col-md-3">
+          <div class="col-12 col-sm-6 col-lg-3">
             <label for="month" class="form-label">Mês</label>
             <select id="month" v-model="selectedMonth" class="form-select" :disabled="!!selectedSpecificDate">
               <option value="" disabled>Selecione o mês</option>
@@ -85,7 +87,7 @@
             </select>
           </div>
           
-          <div class="col-md-3">
+          <div class="col-12 col-sm-6 col-lg-3">
             <label for="year" class="form-label">Ano</label>
             <select id="year" v-model="selectedYear" class="form-select" :disabled="!!selectedSpecificDate">
               <option value="" disabled>Selecione o ano</option>
@@ -95,7 +97,7 @@
             </select>
           </div>
           
-          <div class="col-md-3">
+          <div class="col-12 col-sm-6 col-lg-3">
             <label for="project" class="form-label">Projeto</label>
             <select id="project" v-model="selectedProject" class="form-select">
               <option value="">Todos os projetos</option>
@@ -105,10 +107,9 @@
             </select>
           </div>
           
-          <div class="col-md-3">
+          <div class="col-12 col-sm-6 col-lg-3">
             <label for="reportType" class="form-label">Tipo de Relatório</label>
             <select id="reportType" v-model="selectedReportType" class="form-select">
-              <option value="detailed">Detalhado</option>
               <option value="daily">Resumido por Dia</option>
             </select>
           </div>
@@ -133,27 +134,29 @@
         
         <div v-else-if="reportData && reportData.length && reportGenerated">
           <div class="report-header mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div>
-                <h2 class="report-title">Relatório de {{ formatReportPeriod() }}</h2>
+            <div class="d-flex justify-content-between align-items-start mb-3 report-header-top">
+              <div class="report-info">
+                <h2 class="report-title">Relatório de Horas - {{ formatReportPeriod() }}</h2>
                 <p class="report-subtitle">Total de {{ totalHours }} horas trabalhadas</p>
               </div>
-              <div class="btn-group" role="group">
+              <div class="btn-group export-buttons" role="group">
                 <button @click="exportToPDF" class="btn btn-outline-primary btn-modern">
-                  <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                  <i class="bi bi-file-earmark-pdf me-1"></i> 
+                  <span class="d-none d-sm-inline">PDF</span>
                 </button>
                 <button @click="exportToExcel" class="btn btn-outline-success btn-modern">
-                  <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                  <i class="bi bi-file-earmark-excel me-1"></i> 
+                  <span class="d-none d-sm-inline">Excel</span>
                 </button>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-6">
+            <div class="row report-details">
+              <div class="col-12 col-md-6">
                 <p class="mb-1"><strong>Período:</strong> {{ formatReportPeriod() }}</p>
                 <p class="mb-1"><strong>Prestador:</strong> {{ userStore.userName }}</p>
                 <p class="mb-1"><strong>Empresa:</strong> Empresa Exemplo</p>
               </div>
-              <div class="col-md-6 text-md-end">
+              <div class="col-12 col-md-6 text-md-end">
                 <p class="mb-1"><strong>Total de Horas:</strong> {{ formatHoursToText(totalHours) }}</p>
                 <p class="mb-1"><strong>Total de Projetos:</strong> {{ (uniqueProjects && uniqueProjects.length) || 0 }}</p>
               </div>
@@ -174,7 +177,7 @@
                     <tr>
                       <th>Projeto(s)</th>
                       <th>Descrição das Atividades</th>
-                      <th class="text-end">Qtd. Registros</th>
+                      <th class="text-end d-none d-md-table-cell">Qtd. Registros</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -190,8 +193,11 @@
                             • {{ entry.description }} ({{ entry.hours }}h)
                           </div>
                         </div>
+                        <div class="d-md-none mt-2">
+                          <small class="text-muted">{{ dayData.entries.length }} registro(s)</small>
+                        </div>
                       </td>
-                      <td class="text-end">{{ dayData.entries.length }}</td>
+                      <td class="text-end d-none d-md-table-cell">{{ dayData.entries.length }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -211,20 +217,33 @@
                 <table class="table table-sm table-hover">
                   <thead class="table-light">
                     <tr>
-                      <th>Data</th>
+                      <th class="d-none d-md-table-cell">Data</th>
                       <th>Descrição</th>
                       <th class="text-end">Horas</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="entry in projectData" :key="entry.id">
-                      <td>{{ formatDate(entry.date) }}</td>
-                      <td>{{ entry.description }}</td>
+                      <td class="d-none d-md-table-cell">{{ formatDate(entry.date) }}</td>
+                      <td>
+                        <div>{{ entry.description }}</div>
+                        <div class="d-md-none">
+                          <small class="text-muted">{{ formatDate(entry.date) }}</small>
+                        </div>
+                      </td>
                       <td class="text-end">{{ formatHoursToText(entry.hours) }}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+          
+          <!-- Assinatura do Relatório -->
+          <div class="report-signature mt-5 pt-4 border-top">
+            <div class="text-center">
+              <p class="mb-0 text-muted"><strong>Relatório de horas PJ - Igor Rossi Nunes</strong></p>
+              <p class="mb-0 text-muted small">Gerado em: {{ new Date().toLocaleDateString('pt-BR') }}</p>
             </div>
           </div>
         </div>
@@ -258,7 +277,7 @@ const reportGenerated = ref(false)
 const selectedMonth = ref('')
 const selectedYear = ref('')
 const selectedProject = ref('')
-const selectedReportType = ref('detailed')
+const selectedReportType = ref('daily')
 const selectedSpecificDate = ref('')
 
 // Lista de meses
@@ -464,9 +483,10 @@ const generateReport = async () => {
     
     if (selectedSpecificDate.value) {
       // Filtrar por data específica
-      const specificDate = new Date(selectedSpecificDate.value)
-      startDate = new Date(specificDate.getFullYear(), specificDate.getMonth(), specificDate.getDate(), 0, 0, 0)
-      endDate = new Date(specificDate.getFullYear(), specificDate.getMonth(), specificDate.getDate(), 23, 59, 59)
+      // Criar data a partir da string no formato YYYY-MM-DD
+      const [year, month, day] = selectedSpecificDate.value.split('-').map(Number)
+      startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
     } else {
       // Filtrar por mês/ano
       startDate = new Date(selectedYear.value, selectedMonth.value - 1, 1)
@@ -523,13 +543,9 @@ const formatDate = (date) => {
 const formatHoursFromMinutes = (totalMinutes) => {
   if (!totalMinutes) return '0.00'
   
-  // Conversão CORRETA para formato H.MM
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  
-  // Formato H.MM onde MM são os minutos reais
-  const result = hours + (minutes / 100)
-  return result.toFixed(2)
+  // Conversão CORRETA para horas decimais
+  const hoursDecimal = totalMinutes / 60
+  return hoursDecimal.toFixed(2)
 }
 
 
@@ -723,6 +739,23 @@ onMounted(async () => {
   margin: 0;
 }
 
+/* Report Signature */
+.report-signature {
+  border-top: 1px solid rgba(74, 144, 226, 0.2);
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+}
+
+.report-signature p {
+  font-size: 0.9rem;
+  color: var(--secondary-color);
+}
+
+.report-signature .small {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
 /* Modern Button */
 .btn-modern {
   border-radius: 12px;
@@ -837,6 +870,40 @@ onMounted(async () => {
   }
 }
 
+/* Actions Container */
+.actions-container {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.actions-btn-group {
+  flex-wrap: wrap;
+}
+
+/* Filters Row */
+.filters-row {
+  margin-bottom: 1rem;
+}
+
+/* Report Header */
+.report-header-top {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.report-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.export-buttons {
+  flex-shrink: 0;
+}
+
+.report-details {
+  margin-top: 1rem;
+}
+
 /* Responsive Styles */
 
 /* Mobile Portrait (max-width: 575px) */
@@ -880,6 +947,16 @@ onMounted(async () => {
     padding: 0.75rem;
   }
   
+  /* Actions container mobile */
+  .actions-container {
+    justify-content: center;
+  }
+  
+  .actions-btn-group {
+    width: 100%;
+    justify-content: center;
+  }
+  
   /* Button groups */
   .btn-group {
     width: 100%;
@@ -892,6 +969,23 @@ onMounted(async () => {
     margin: 0;
     font-size: 0.875rem;
     padding: 0.75rem 1rem;
+  }
+  
+  /* Report header mobile */
+  .report-header-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .export-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .export-buttons .btn {
+    flex: 1;
+    margin: 0 0.25rem;
   }
   
   /* Export buttons */

@@ -337,7 +337,7 @@ input[type="time"]::-ms-clear {
 </style>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
@@ -382,7 +382,8 @@ const filters = ref({
 
 // Formulário
 const resetForm = () => {
-  return {
+  console.log('Resetando formulário...')
+  const form = {
     date: new Date().toISOString().split('T')[0],
     projectId: '',
     startTime: '',
@@ -390,6 +391,8 @@ const resetForm = () => {
     hours: '',
     description: ''
   }
+  console.log('Formulário resetado:', form)
+  return form
 }
 
 const entryForm = ref(resetForm())
@@ -414,7 +417,9 @@ const filteredEntries = computed(() => {
         entryDate = new Date(entry.date)
       }
       
-      const selectedDate = new Date(filters.value.specificDate)
+      // Criar data a partir da string no formato YYYY-MM-DD para evitar problemas de fuso horário
+      const [year, month, day] = filters.value.specificDate.split('-').map(Number)
+      const selectedDate = new Date(year, month - 1, day)
       return entryDate.toDateString() === selectedDate.toDateString()
     })
   } else {
@@ -494,12 +499,12 @@ const calculatedHours = computed(() => {
   const diffMs = end - start
   const totalMinutes = diffMs / (1000 * 60)
   
-  // Conversão CORRETA para formato H.MM
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
+  // Conversão CORRETA para horas decimais
+  const hours = totalMinutes / 60
   
-  // Formato H.MM onde MM são os minutos reais
-  const result = hours + (minutes / 100)
+  // Retorna horas em formato decimal (ex: 0.5 para 30 minutos)
+  const result = hours
+  entryForm.value.hours = result.toFixed(2)
   return result.toFixed(2)
 })
 
@@ -513,23 +518,35 @@ const calculateHours = () => {
 }
 
 const loadData = async () => {
+  console.log('Iniciando carregamento de dados...')
   loading.value = true
   
   try {
     const userId = userStore.userId
+    console.log('UserStore userId:', userId)
     
+    if (!userId) {
+      console.error('Usuário não autenticado')
+      loading.value = false
+      return
+    }
+    
+    console.log('Carregando registros e projetos...')
     // Carregar projetos e registros de tempo
     const [projectsData, timeEntriesData] = await Promise.all([
       projectsService.getProjects(userId),
       timeEntriesService.getTimeEntries(userId)
     ])
     
+    console.log('Dados carregados - Registros:', timeEntriesData.length, 'Projetos:', projectsData.length)
     projects.value = projectsData
     timeEntries.value = timeEntriesData
   } catch (error) {
     console.error('Erro ao carregar dados:', error)
+    alert('Erro ao carregar dados. Verifique sua conexão.')
   } finally {
     loading.value = false
+    console.log('Carregamento finalizado')
   }
 }
 
@@ -647,10 +664,12 @@ const formatDateBR = (dateString) => {
 }
 
 const closeModal = () => {
+  console.log('Fechando modal...')
   showAddModal.value = false
   isEditing.value = false
   currentEntryId.value = null
   entryForm.value = resetForm()
+  console.log('Modal fechado, showAddModal:', showAddModal.value)
 }
 
 const editEntry = (entry) => {
@@ -689,23 +708,35 @@ const saveEntry = async () => {
   formLoading.value = true
   
   try {
+    console.log('Iniciando salvamento do registro:', entryForm.value)
+    
     // Validação básica
     if (!entryForm.value.date || !entryForm.value.projectId || !entryForm.value.startTime || !entryForm.value.endTime) {
       alert('Por favor, preencha todos os campos obrigatórios.')
+      formLoading.value = false
       return
     }
     
     // Validação de horários
-    const start = new Date(`2000-01-01T${entryForm.value.startTime}:00`)
-    const end = new Date(`2000-01-01T${entryForm.value.endTime}:00`)
-    
-    if (end <= start && entryForm.value.endTime <= entryForm.value.startTime) {
-      alert('O horário de fim deve ser posterior ao horário de início.')
-      return
-    }
+    try {
+      const start = new Date(`2000-01-01T${entryForm.value.startTime}:00`)
+      const end = new Date(`2000-01-01T${entryForm.value.endTime}:00`)
+      
+      if (end <= start && entryForm.value.endTime <= entryForm.value.startTime) {
+         alert('O horário de fim deve ser posterior ao horário de início.')
+         formLoading.value = false
+         return
+       }
+     } catch (error) {
+       console.error('Erro na validação de horários:', error)
+       alert('Formato de horário inválido. Use o formato HH:MM.')
+       formLoading.value = false
+       return
+     }
     
     if (parseFloat(entryForm.value.hours) <= 0) {
       alert('O total de horas deve ser maior que zero.')
+      formLoading.value = false
       return
     }
     
@@ -733,12 +764,17 @@ const saveEntry = async () => {
       timeEntries.value.push(newEntry)
     }
     
+    console.log('Carregando dados após salvamento...')
+    await loadData()
+    console.log('Fechando modal...')
     closeModal()
+    console.log('Registro salvo com sucesso!')
   } catch (error) {
     console.error('Erro ao salvar registro:', error)
-    alert('Ocorreu um erro ao salvar o registro. Tente novamente.')
+    alert('Erro ao salvar registro. Tente novamente.')
   } finally {
     formLoading.value = false
+    console.log('FormLoading resetado para false')
   }
 }
 
@@ -768,64 +804,74 @@ const deleteEntry = async () => {
 
 
 onMounted(async () => {
-  await loadData()
+  console.log('Componente TimeEntries montado')
+  console.log('Props recebidas:', props)
   
-  // Abrir modal se a prop openModal for true
-  if (props.openModal) {
-    showAddModal.value = true
-  }
-  
-  // Configurar formato 24 horas globalmente
-  document.documentElement.setAttribute('lang', 'pt-BR')
-  
-  // Aguardar um pouco para garantir que os elementos estejam renderizados
-  setTimeout(() => {
-    const timeInputs = document.querySelectorAll('input[type="time"]')
-    timeInputs.forEach(input => {
-      // Configurações para forçar formato 24h
-      input.setAttribute('data-format', '24')
-      input.setAttribute('lang', 'pt-BR')
-      
-      // Interceptar o showPicker para configurar o locale
-      if (input.showPicker) {
-        const originalShowPicker = input.showPicker
-        input.showPicker = function() {
-          // Configurar locale antes de abrir o picker
-          document.documentElement.setAttribute('lang', 'pt-BR')
-          document.body.setAttribute('lang', 'pt-BR')
-          
-          // Tentar forçar formato 24h via CSS
-          const style = document.createElement('style')
-          style.textContent = `
-            input[type="time"]::-webkit-calendar-picker-indicator {
-              background: none;
-            }
-            input[type="time"] {
-              color-scheme: light;
-            }
-          `
-          document.head.appendChild(style)
-          
-          return originalShowPicker.call(this)
-        }
-      }
-      
-      // Adicionar event listener para validar formato
-      input.addEventListener('input', function(e) {
-        const value = e.target.value
-        if (value && value.includes('AM') || value.includes('PM')) {
-          // Se detectar AM/PM, converter para 24h
-          const time24 = convertTo24Hour(value)
-          if (time24) {
-            e.target.value = time24
+  try {
+    await loadData()
+    
+    // Abrir modal se a prop openModal for true
+    if (props.openModal) {
+      console.log('Abrindo modal automaticamente')
+      showAddModal.value = true
+    }
+    
+    // Configurar formato 24 horas globalmente
+    document.documentElement.setAttribute('lang', 'pt-BR')
+    
+    // Aguardar um pouco para garantir que os elementos estejam renderizados
+    setTimeout(() => {
+      const timeInputs = document.querySelectorAll('input[type="time"]')
+      timeInputs.forEach(input => {
+        // Configurações para forçar formato 24h
+        input.setAttribute('data-format', '24')
+        input.setAttribute('lang', 'pt-BR')
+        
+        // Interceptar o showPicker para configurar o locale
+        if (input.showPicker) {
+          const originalShowPicker = input.showPicker
+          input.showPicker = function() {
+            // Configurar locale antes de abrir o picker
+            document.documentElement.setAttribute('lang', 'pt-BR')
+            document.body.setAttribute('lang', 'pt-BR')
+            
+            // Tentar forçar formato 24h via CSS
+            const style = document.createElement('style')
+            style.textContent = `
+              input[type="time"]::-webkit-calendar-picker-indicator {
+                background: none;
+              }
+              input[type="time"] {
+                color-scheme: light;
+              }
+            `
+            document.head.appendChild(style)
+            
+            return originalShowPicker.call(this)
           }
         }
+        
+        // Adicionar event listener para validar formato
+        input.addEventListener('input', function(e) {
+          const value = e.target.value
+          if (value && value.includes('AM') || value.includes('PM')) {
+            // Se detectar AM/PM, converter para 24h
+            const time24 = convertTo24Hour(value)
+            if (time24) {
+              e.target.value = time24
+            }
+          }
+        })
       })
-    })
-  }, 100)
-  
-  // Listener para atualizações de registros de tempo
-  window.addEventListener('timeEntriesUpdated', loadData)
+    }, 100)
+    
+    // Listener para atualizações de registros de tempo
+    window.addEventListener('timeEntriesUpdated', loadData)
+    
+    console.log('Inicialização do componente concluída')
+  } catch (error) {
+    console.error('Erro durante a inicialização:', error)
+  }
 })
 
 onUnmounted(() => {

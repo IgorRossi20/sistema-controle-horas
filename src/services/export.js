@@ -67,7 +67,32 @@ export const exportService = {
         }
       })
       
-      // Adicionar rodapé
+      // Adicionar assinatura no final da última página
+      const finalY = doc.lastAutoTable.finalY || 40
+      const pageHeight = doc.internal.pageSize.getHeight()
+      
+      // Verificar se há espaço suficiente para a assinatura
+      if (finalY + 40 > pageHeight - 30) {
+        doc.addPage()
+      }
+      
+      // Adicionar linha separadora
+      const currentY = doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY + 20 : 60
+      doc.setLineWidth(0.5)
+      doc.setDrawColor(200, 200, 200)
+      doc.line(14, currentY, doc.internal.pageSize.getWidth() - 14, currentY)
+      
+      // Adicionar assinatura
+      doc.setFontSize(12)
+      doc.setTextColor(80)
+      doc.text(
+        'Relatório de horas PJ - Igor Rossi Nunes',
+        doc.internal.pageSize.getWidth() / 2,
+        currentY + 15,
+        { align: 'center' }
+      )
+      
+      // Adicionar rodapé com numeração de páginas
       const pageCount = doc.internal.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)

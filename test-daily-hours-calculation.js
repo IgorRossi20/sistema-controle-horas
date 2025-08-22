@@ -1,16 +1,16 @@
 // Script para testar cálculo de horas por dia nos relatórios
 
-// Simular dados da imagem fornecida pelo usuário
+// Simular dados corrigidos com horas decimais corretas
 const testEntries = [
-  { id: '1', hours: '0.30', description: 'Atividade 1', date: '2025-08-19', projectId: 'proj1' },
-  { id: '2', hours: '0.30', description: 'Atividade 2', date: '2025-08-19', projectId: 'proj2' },
-  { id: '3', hours: '1.00', description: 'Atividade 3', date: '2025-08-19', projectId: 'proj3' },
-  { id: '4', hours: '0.30', description: 'Atividade 4', date: '2025-08-19', projectId: 'proj4' },
-  { id: '5', hours: '0.50', description: 'Atividade 5', date: '2025-08-19', projectId: 'proj5' },
-  { id: '6', hours: '0.30', description: 'Atividade 6', date: '2025-08-19', projectId: 'proj6' },
-  { id: '7', hours: '1.15', description: 'Atividade 7', date: '2025-08-19', projectId: 'proj7' },
-  { id: '8', hours: '3.00', description: 'Atividade 8', date: '2025-08-19', projectId: 'proj8' },
-  { id: '9', hours: '0.30', description: 'Atividade 9', date: '2025-08-19', projectId: 'proj9' }
+  { id: '1', hours: '0.50', description: 'Atividade 1 (30min)', date: '2025-08-19', projectId: 'proj1' },
+  { id: '2', hours: '0.50', description: 'Atividade 2 (30min)', date: '2025-08-19', projectId: 'proj2' },
+  { id: '3', hours: '1.00', description: 'Atividade 3 (60min)', date: '2025-08-19', projectId: 'proj3' },
+  { id: '4', hours: '0.50', description: 'Atividade 4 (30min)', date: '2025-08-19', projectId: 'proj4' },
+  { id: '5', hours: '0.50', description: 'Atividade 5 (30min)', date: '2025-08-19', projectId: 'proj5' },
+  { id: '6', hours: '0.50', description: 'Atividade 6 (30min)', date: '2025-08-19', projectId: 'proj6' },
+  { id: '7', hours: '1.25', description: 'Atividade 7 (75min)', date: '2025-08-19', projectId: 'proj7' },
+  { id: '8', hours: '3.00', description: 'Atividade 8 (180min)', date: '2025-08-19', projectId: 'proj8' },
+  { id: '9', hours: '0.50', description: 'Atividade 9 (30min)', date: '2025-08-19', projectId: 'proj9' }
 ]
 
 // Função para simular o cálculo do Reports.vue
@@ -46,17 +46,13 @@ function calculateDailyHours(entries) {
   return dailyData
 }
 
-// Função para simular formatHoursFromMinutes (que não deveria ser usada aqui)
+// Função para simular formatHoursFromMinutes (CORRIGIDA)
 function formatHoursFromMinutes(totalMinutes) {
   if (!totalMinutes) return '0.00'
   
-  // Conversão CORRETA para formato H.MM
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  
-  // Formato H.MM onde MM são os minutos reais
-  const result = hours + (minutes / 100)
-  return result.toFixed(2)
+  // Conversão CORRETA para horas decimais
+  const hoursDecimal = totalMinutes / 60
+  return hoursDecimal.toFixed(2)
 }
 
 console.log('=== TESTE DE CÁLCULO DE HORAS DIÁRIAS ===')

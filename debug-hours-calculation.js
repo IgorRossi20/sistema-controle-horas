@@ -4,18 +4,17 @@
 import { timeEntriesService } from './src/services/firebase.js'
 import { auth } from './src/main.js'
 
-// Função para converter horas H.MM para minutos
-function hoursToMinutes(hoursStr) {
-  if (!hoursStr) return 0
-  const [hours, minutes] = hoursStr.toString().split('.').map(Number)
-  return (hours || 0) * 60 + (minutes || 0)
+// Função para converter horas decimais para minutos
+function hoursToMinutes(hoursDecimal) {
+  if (!hoursDecimal) return 0
+  const hours = parseFloat(hoursDecimal)
+  return hours * 60
 }
 
-// Função para converter minutos para H.MM
+// Função para converter minutos para horas decimais
 function minutesToHours(minutes) {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours}.${mins.toString().padStart(2, '0')}`
+  const hoursDecimal = minutes / 60
+  return hoursDecimal.toFixed(2)
 }
 
 // Função para simular o cálculo do Dashboard

@@ -1,14 +1,18 @@
 <template>
   <div class="projects">
     <div class="page-header mb-5">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
+      <div class="d-flex justify-content-between align-items-center header-container">
+        <div class="header-info">
           <h1 class="page-title">Projetos</h1>
           <p class="page-subtitle">Gerencie seus projetos e clientes</p>
         </div>
-        <button class="btn btn-primary btn-modern hover-lift transition-all" @click="showAddModal = true">
-          <i class="bi bi-plus-circle me-2"></i> Novo Projeto
-        </button>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-modern hover-lift transition-all" @click="showAddModal = true">
+            <i class="bi bi-plus-circle me-2"></i>
+            <span class="d-none d-sm-inline">Novo Projeto</span>
+            <span class="d-sm-none">Novo</span>
+          </button>
+        </div>
       </div>
     </div>
     
@@ -21,8 +25,8 @@
             Filtros
           </h5>
         </div>
-        <div class="row g-3">
-          <div class="col-md-6">
+        <div class="row g-3 filters-row">
+          <div class="col-12 col-sm-6 col-lg-4">
             <label for="status-filter" class="form-label">Status</label>
             <select id="status-filter" v-model="statusFilter" class="form-select">
               <option value="">Todos os status</option>
@@ -58,25 +62,31 @@
                 <tr>
                   <th>Nome</th>
                   <th>Status</th>
-                  <th>Horas Registradas</th>
+                  <th class="d-none d-md-table-cell">Horas Registradas</th>
                   <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="project in filteredProjects" :key="project.id">
-                  <td>{{ project.name }}</td>
+                  <td>
+                    <div class="project-name">{{ project.name }}</div>
+                    <div class="d-md-none text-muted small mt-1">
+                      Horas: {{ getProjectHours(project.id) }}
+                    </div>
+                  </td>
                   <td>
                     <span :class="getStatusBadgeClass(project.status)">
                       {{ getStatusLabel(project.status) }}
                     </span>
                   </td>
-                  <td>
+                  <td class="d-none d-md-table-cell">
                     {{ getProjectHours(project.id) }}
                   </td>
                   <td>
-                    <div class="btn-group">
-                      <button class="btn btn-sm btn-outline-primary transition-all hover-scale" @click="editProject(project)">
+                    <div class="btn-group project-actions">
+                      <button class="btn btn-sm btn-outline-primary transition-all hover-scale" @click="editProject(project)" title="Editar projeto">
                         <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-1">Editar</span>
                       </button>
                       <button 
                         class="btn btn-sm btn-outline-danger transition-all hover-scale" 
@@ -85,6 +95,7 @@
                         :title="hasTimeEntries(project.id) ? 'Projeto possui horas registradas' : 'Excluir projeto'"
                       >
                         <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-1">Excluir</span>
                       </button>
                     </div>
                   </td>
@@ -524,6 +535,36 @@ onMounted(async () => {
   }
 }
 
+/* Header Container */
+.header-container {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+/* Filters Row */
+.filters-row {
+  margin-bottom: 1rem;
+}
+
+/* Project Actions */
+.project-actions {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.project-name {
+  font-weight: 500;
+}
+
 /* Responsive Styles */
 
 /* Mobile Portrait (max-width: 575px) */
@@ -538,16 +579,31 @@ onMounted(async () => {
     margin-bottom: 0.5rem;
   }
   
-  .page-header .d-flex {
+  .header-container {
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    text-align: center;
+  }
+  
+  .header-actions {
+    width: 100%;
   }
   
   .btn-modern {
     width: 100%;
     font-size: 0.875rem;
     padding: 0.75rem 1rem;
+  }
+  
+  /* Project actions mobile */
+  .project-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .project-actions .btn {
+    width: 100%;
+    margin-bottom: 0.25rem;
   }
   
   /* Filter controls */
