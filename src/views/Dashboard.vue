@@ -23,7 +23,7 @@
     </div>
     
     <!-- Progresso Mensal -->
-    <div class="row mb-4 animate-fade-in">
+    <div class="row mb-4 animate-fade-in progress-section">
       <div class="col-12">
         <div class="card modern-card">
           <div class="card-body">
@@ -116,7 +116,7 @@
       </div>
     </div>
     
-    <div class="row mb-4">
+    <div class="row mb-4 projects-section">
       <div class="col-12">
         <div class="card modern-card chart-card">
           <div class="card-body">
@@ -150,7 +150,7 @@
       </div>
     </div>
     
-    <div class="row">
+    <div class="row recent-section">
       <div class="col-md-6 mb-4 mb-md-0">
         <div class="card">
           <div class="card-body">
@@ -180,7 +180,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="entry in recentEntries" :key="entry.id" class="cursor-pointer" @click="viewEntry(entry.id)">
-                    <td>{{ formatDate(entry.date) }}</td>
+                    <td>{{ entry.date ? formatDate(entry.date) : '-' }}</td>
                     <td>{{ getProjectName(entry.projectId) }}</td>
                     <td>{{ formatHoursToText(entry.hours) }}</td>
                   </tr>
@@ -221,13 +221,14 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, nextTick, watch } from 'vue'
+import { ref, onMounted, computed, nextTick, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { timeEntriesService, projectsService } from '../services/firebase'
 import { Chart, registerables } from 'chart.js'
 import { workingDaysService } from '../services/workingDays'
 import { formatHoursToText, formatDateBR } from '../utils/formatHours'
+import { throttle } from '../utils/debounce'
 
 Chart.register(...registerables)
 
@@ -236,6 +237,8 @@ export default {
   setup() {
     const router = useRouter()
     const userStore = useUserStore()
+console.log('Dashboard - UserStore inicializado:', userStore)
+console.log('Dashboard - UserStore userId:', userStore.userId)
     const userId = userStore.userId
     
     const timeEntries = ref([])
@@ -244,6 +247,19 @@ export default {
     const loading = ref(true)
     const projectChart = ref(null)
     const chartInstance = ref(null)
+    
+    // Lazy loading state
+    const dataLoaded = ref({
+      timeEntries: false,
+      projects: false,
+      monthlyData: false
+    })
+    const isVisible = ref({
+      summary: true,
+      progress: false,
+      projects: false,
+      recent: false
+    })
     
     // Garantir que os arrays sempre sejam válidos
     watch(timeEntries, (newVal) => {
@@ -259,6 +275,79 @@ export default {
         projects.value = []
       }
     }, { immediate: true })
+    
+    // Lazy loading com throttle para scroll
+    const handleScroll = throttle(() => {
+      const sections = [
+        { key: 'progress', element: document.querySelector('.progress-section') },
+        { key: 'projects', element: document.querySelector('.projects-section') },
+        { key: 'recent', element: document.querySelector('.recent-section') }
+      ]
+      
+      sections.forEach(({ key, element }) => {
+        if (element && !isVisible.value[key]) {
+          const rect = element.getBoundingClientRect()
+          const isInViewport = rect.top < window.innerHeight && rect.bottom > 0
+          
+          if (isInViewport) {
+            isVisible.value[key] = true
+            loadSectionData(key)
+          }
+        }
+      })
+    }, 100)
+    
+    const loadSectionData = async (section) => {
+      switch (section) {
+        case 'progress':
+          if (!dataLoaded.value.monthlyData) {
+            await loadMonthlyData()
+            dataLoaded.value.monthlyData = true
+          }
+          break
+        case 'projects':
+          if (!dataLoaded.value.projects) {
+            await loadProjectsData()
+            dataLoaded.value.projects = true
+            // Renderizar gráfico após carregar dados dos projetos
+            nextTick(() => {
+              setTimeout(() => {
+                renderChart()
+              }, 100)
+            })
+          }
+          break
+        case 'recent':
+          if (!dataLoaded.value.timeEntries) {
+            await loadTimeEntriesData()
+            dataLoaded.value.timeEntries = true
+          }
+          break
+      }
+    }
+    
+    const loadMonthlyData = async () => {
+      // Dados já carregados no loadData inicial
+      console.log('📅 Dados mensais já carregados')
+    }
+    
+    const loadProjectsData = async () => {
+      if (!projects.value.length) {
+        try {
+          console.log('📊 Carregando dados dos projetos...')
+          const userId = userStore.userId
+          projects.value = await projectsService.getProjects(userId)
+          console.log('✅ Projetos carregados:', projects.value.length)
+        } catch (err) {
+          console.error('❌ Erro ao carregar projetos:', err)
+        }
+      }
+    }
+    
+    const loadTimeEntriesData = async () => {
+      // Os timeEntries já são carregados no loadData inicial para o mês atual
+      console.log('⏰ Dados de lançamentos já carregados')
+    }
     
     // Carrega dados quando o componente é montado
     onMounted(async () => {
@@ -276,20 +365,16 @@ export default {
         console.log('🔧 Componente montado')
         await loadData()
         
-        // Aguardar o DOM estar pronto e tentar renderizar o gráfico
-        nextTick(() => {
-          console.log('🎯 nextTick - projectChart.value:', projectChart.value)
-          if (projectChart.value) {
-            console.log('✅ Canvas encontrado no DOM')
-            // Aguardar um pouco mais para garantir que tudo esteja pronto
-            setTimeout(() => {
-              console.log('⏰ Tentando renderizar gráfico após timeout')
-              renderChart()
-            }, 100)
-          } else {
-            console.log('❌ Canvas não encontrado no DOM')
-          }
-        })
+        // Marcar dados básicos como carregados
+        dataLoaded.value.timeEntries = true
+        dataLoaded.value.monthlyData = true
+        
+        // Adicionar listener de scroll para lazy loading
+        window.addEventListener('scroll', handleScroll)
+        
+        // Verificar seções visíveis inicialmente
+        await nextTick()
+        handleScroll()
         
         console.log('✅ Dados carregados com sucesso')
       } catch (error) {
@@ -298,6 +383,13 @@ export default {
         timeEntries.value = []
         projects.value = []
         loading.value = false
+      }
+    })
+    
+    // Cleanup no unmount
+    onUnmounted(() => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('scroll', handleScroll)
       }
     })
     
@@ -314,13 +406,28 @@ export default {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
     const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0)
     
+    // Cache para otimização de performance
+    const computedCache = new Map()
+    let lastTimeEntriesLength = 0
+    let lastProjectsLength = 0
+    
     // Entradas do mês atual (já filtradas no backend)
     const currentMonthEntries = computed(() => {
       try {
         if (!timeEntries.value || !Array.isArray(timeEntries.value)) {
           return []
         }
-        return timeEntries.value
+        
+        // Cache simples baseado no tamanho do array
+        const cacheKey = `currentMonth_${timeEntries.value.length}`
+        if (computedCache.has(cacheKey) && timeEntries.value.length === lastTimeEntriesLength) {
+          return computedCache.get(cacheKey)
+        }
+        
+        const result = timeEntries.value
+        computedCache.set(cacheKey, result)
+        lastTimeEntriesLength = timeEntries.value.length
+        return result
       } catch (error) {
         console.error('Erro em currentMonthEntries:', error)
         return []
@@ -332,6 +439,11 @@ export default {
       try {
         if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0) {
           return '0.00'
+        }
+        
+        const cacheKey = `totalHours_${currentMonthEntries.value.length}`
+        if (computedCache.has(cacheKey)) {
+          return computedCache.get(cacheKey)
         }
         
         const total = currentMonthEntries.value.reduce((sum, entry) => {
@@ -347,7 +459,9 @@ export default {
           }
         }, 0)
         
-        return total.toFixed(2)
+        const result = total.toFixed(2)
+        computedCache.set(cacheKey, result)
+        return result
       } catch (error) {
         console.error('Erro em totalHoursMonth:', error)
         return '0.00'

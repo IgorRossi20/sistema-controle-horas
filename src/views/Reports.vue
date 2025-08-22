@@ -224,11 +224,11 @@
                   </thead>
                   <tbody>
                     <tr v-for="entry in projectData" :key="entry.id">
-                      <td class="d-none d-md-table-cell">{{ formatDate(entry.date) }}</td>
+                      <td class="d-none d-md-table-cell">{{ entry.date ? formatDate(entry.date) : '-' }}</td>
                       <td>
                         <div>{{ entry.description }}</div>
                         <div class="d-md-none">
-                          <small class="text-muted">{{ formatDate(entry.date) }}</small>
+                          <small class="text-muted">{{ entry.date ? formatDate(entry.date) : '-' }}</small>
                         </div>
                       </td>
                       <td class="text-end">{{ formatHoursToText(entry.hours) }}</td>
@@ -257,12 +257,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { timeEntriesService } from '../services/timeEntries'
 import { projectsService } from '../services/projects'
 import { exportService } from '../services/export'
 import { formatHoursToText, formatDateBR } from '../utils/formatHours'
+import { debounceFilter, SearchCache } from '../utils/debounce'
 
 const userStore = useUserStore()
 
@@ -273,12 +274,22 @@ const timeEntries = ref([])
 const reportData = ref([])
 const reportGenerated = ref(false)
 
-// Filtros
+// Filtros com debounce
 const selectedMonth = ref('')
 const selectedYear = ref('')
 const selectedProject = ref('')
 const selectedReportType = ref('daily')
 const selectedSpecificDate = ref('')
+const filterCache = new SearchCache(20, 3 * 60 * 1000) // 3 minutos TTL
+
+// Debounced filter functions
+const debouncedDateFilter = debounceFilter(() => {
+  filterCache.clear() // Limpar cache quando filtros mudam
+}, 300)
+
+const debouncedProjectFilter = debounceFilter(() => {
+  filterCache.clear() // Limpar cache quando filtros mudam
+}, 200)
 
 // Lista de meses
 const months = [
@@ -292,9 +303,42 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i).sort((a, b) =
 
 
 
+// Cache para otimização de performance
+const dateConversionCache = new Map()
+const projectFilterCache = new Map()
+
+// Função auxiliar para conversão de data (memoizada)
+const convertToDate = (dateValue) => {
+  if (!dateValue) return new Date()
+  
+  const cacheKey = typeof dateValue === 'object' ? JSON.stringify(dateValue) : dateValue
+  if (dateConversionCache.has(cacheKey)) {
+    return dateConversionCache.get(cacheKey)
+  }
+  
+  let result
+  if (dateValue instanceof Date) {
+    result = dateValue
+  } else if (typeof dateValue === 'string') {
+    result = new Date(dateValue)
+  } else if (dateValue && dateValue.seconds) {
+    result = new Date(dateValue.seconds * 1000)
+  } else {
+    result = new Date(dateValue)
+  }
+  
+  dateConversionCache.set(cacheKey, result)
+  return result
+}
+
 // Computed properties
 const filteredEntries = computed(() => {
   if (!selectedMonth.value || !selectedYear.value) return []
+  
+  const cacheKey = `${selectedProject.value || 'all'}_${reportData.value.length}`
+  if (projectFilterCache.has(cacheKey)) {
+    return projectFilterCache.get(cacheKey)
+  }
   
   let result = [...reportData.value]
   
@@ -303,6 +347,7 @@ const filteredEntries = computed(() => {
     result = result.filter(entry => entry.projectId === selectedProject.value)
   }
   
+  projectFilterCache.set(cacheKey, result)
   return result
 })
 
@@ -340,30 +385,12 @@ const groupedEntries = computed(() => {
       if (!a || !b || typeof a !== 'object' || typeof b !== 'object') {
         return 0
       }
-        let dateA, dateB
-        
-        if (a.date instanceof Date) {
-          dateA = a.date
-        } else if (typeof a.date === 'string') {
-          dateA = new Date(a.date)
-        } else if (a.date && a.date.seconds) {
-          dateA = new Date(a.date.seconds * 1000)
-        } else {
-          dateA = new Date(a.date)
-        }
-        
-        if (b.date instanceof Date) {
-          dateB = b.date
-        } else if (typeof b.date === 'string') {
-          dateB = new Date(b.date)
-        } else if (b.date && b.date.seconds) {
-          dateB = new Date(b.date.seconds * 1000)
-        } else {
-          dateB = new Date(b.date)
-        }
-        
-        return dateA - dateB
-      })
+      
+      const dateA = convertToDate(a.date)
+      const dateB = convertToDate(b.date)
+      
+      return dateA - dateB
+    })
   })
   
   return grouped
@@ -657,6 +684,36 @@ const exportToExcel = async () => {
     alert('Ocorreu um erro ao exportar para Excel. Tente novamente.')
   }
 }
+
+// Watchers com debounce para regenerar relatório quando filtros mudarem
+watch([selectedMonth, selectedYear, selectedSpecificDate], () => {
+  if (reportGenerated.value) {
+    debouncedDateFilter()
+    setTimeout(() => {
+      if (reportGenerated.value) {
+        generateReport()
+      }
+    }, 350) // Aguardar debounce + margem
+  }
+})
+
+watch([selectedProject], () => {
+  if (reportGenerated.value) {
+    debouncedProjectFilter()
+    setTimeout(() => {
+      if (reportGenerated.value) {
+        generateReport()
+      }
+    }, 250) // Aguardar debounce + margem
+  }
+})
+
+// Watcher imediato para tipo de relatório (sem debounce)
+watch([selectedReportType], () => {
+  if (reportGenerated.value) {
+    generateReport()
+  }
+})
 
 onMounted(async () => {
   await loadData()

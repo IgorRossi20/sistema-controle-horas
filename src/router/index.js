@@ -5,6 +5,7 @@ import Dashboard from '../views/Dashboard.vue'
 import TimeEntries from '../views/TimeEntries.vue'
 import Projects from '../views/Projects.vue'
 import Reports from '../views/Reports.vue'
+import Test from '../views/Test.vue'
 import NotFound from '../views/NotFound.vue'
 
 const routes = [
@@ -38,6 +39,11 @@ const routes = [
     path: '/reports',
     name: 'Reports',
     component: Reports
+  },
+  {
+    path: '/test',
+    name: 'Test',
+    component: Test
   },
 
   {

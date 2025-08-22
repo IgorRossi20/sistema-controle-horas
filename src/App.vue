@@ -27,6 +27,9 @@
               <li class="nav-item">
                 <router-link class="nav-link" to="/reports">Relatórios</router-link>
               </li>
+              <li class="nav-item">
+                <router-link class="nav-link" to="/test">🧪 Teste</router-link>
+              </li>
 
             </ul>
           </div>

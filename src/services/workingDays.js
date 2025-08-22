@@ -1,6 +1,46 @@
 /**
  * Serviço para calcular dias úteis e gerenciar metas de horas mensais
+ * Implementa memoização para otimizar performance
  */
+
+// Cache para memoização
+const memoCache = new Map()
+const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 horas
+
+/**
+ * Função de memoização genérica
+ * @param {Function} fn - Função a ser memoizada
+ * @param {string} keyPrefix - Prefixo para a chave do cache
+ * @returns {Function} - Função memoizada
+ */
+function memoize(fn, keyPrefix) {
+  return function(...args) {
+    const key = `${keyPrefix}_${JSON.stringify(args)}`
+    const cached = memoCache.get(key)
+    
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      return cached.value
+    }
+    
+    const result = fn.apply(this, args)
+    memoCache.set(key, {
+      value: result,
+      timestamp: Date.now()
+    })
+    
+    // Limpar cache antigo periodicamente
+    if (memoCache.size > 100) {
+      const now = Date.now()
+      for (const [cacheKey, cacheValue] of memoCache.entries()) {
+        if (now - cacheValue.timestamp > CACHE_TTL) {
+          memoCache.delete(cacheKey)
+        }
+      }
+    }
+    
+    return result
+  }
+}
 
 // Feriados nacionais brasileiros fixos
 const FIXED_HOLIDAYS = {
@@ -15,11 +55,11 @@ const FIXED_HOLIDAYS = {
 }
 
 /**
- * Calcula a Páscoa para um determinado ano
+ * Calcula a Páscoa para um determinado ano (com memoização)
  * @param {number} year - Ano
  * @returns {Date} - Data da Páscoa
  */
-function calculateEaster(year) {
+const calculateEaster = memoize(function(year) {
   const a = year % 19
   const b = Math.floor(year / 100)
   const c = year % 100
@@ -36,14 +76,14 @@ function calculateEaster(year) {
   const day = ((h + l - 7 * m + 114) % 31) + 1
   
   return new Date(year, month - 1, day)
-}
+}, 'easter')
 
 /**
- * Obtém todos os feriados para um determinado ano
+ * Obtém todos os feriados para um determinado ano (com memoização)
  * @param {number} year - Ano
  * @returns {Date[]} - Array de datas dos feriados
  */
-function getHolidays(year) {
+const getHolidays = memoize(function(year) {
   const holidays = []
   
   // Feriados fixos
@@ -71,7 +111,7 @@ function getHolidays(year) {
   holidays.push(corpusChristi)
   
   return holidays
-}
+}, 'holidays')
 
 /**
  * Verifica se uma data é feriado
@@ -98,21 +138,21 @@ function isWeekend(date) {
 }
 
 /**
- * Verifica se uma data é dia útil
+ * Verifica se uma data é dia útil - com memoização
  * @param {Date} date - Data a verificar
  * @returns {boolean} - True se for dia útil
  */
-function isWorkingDay(date) {
+const isWorkingDay = memoize(function(date) {
   return !isWeekend(date) && !isHoliday(date)
-}
+}, 'workingDay')
 
 /**
- * Calcula o número de dias úteis em um mês
+ * Calcula o número de dias úteis em um mês - com memoização
  * @param {number} year - Ano
  * @param {number} month - Mês (0-11)
  * @returns {number} - Número de dias úteis
  */
-function getWorkingDaysInMonth(year, month) {
+const getWorkingDaysInMonth = memoize(function(year, month) {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
   let workingDays = 0
@@ -124,14 +164,14 @@ function getWorkingDaysInMonth(year, month) {
   }
   
   return workingDays
-}
+}, 'workingDaysMonth')
 
 /**
- * Calcula o número de dias úteis restantes no mês
+ * Calcula o número de dias úteis restantes no mês - com memoização
  * @param {Date} currentDate - Data atual
  * @returns {number} - Número de dias úteis restantes
  */
-function getRemainingWorkingDays(currentDate = new Date()) {
+const getRemainingWorkingDays = memoize(function(currentDate = new Date()) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const lastDay = new Date(year, month + 1, 0)
@@ -144,14 +184,14 @@ function getRemainingWorkingDays(currentDate = new Date()) {
   }
   
   return remainingDays
-}
+}, 'remainingWorkingDays')
 
 /**
- * Calcula o número de dias úteis trabalhados no mês até a data atual
+ * Calcula o número de dias úteis trabalhados no mês até a data atual - com memoização
  * @param {Date} currentDate - Data atual
  * @returns {number} - Número de dias úteis trabalhados
  */
-function getWorkedDaysInMonth(currentDate = new Date()) {
+const getWorkedDaysInMonth = memoize(function(currentDate = new Date()) {
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
   const firstDay = new Date(year, month, 1)
@@ -164,7 +204,7 @@ function getWorkedDaysInMonth(currentDate = new Date()) {
   }
   
   return workedDays
-}
+}, 'workedDaysMonth')
 
 /**
  * Calcula o número de dias trabalhados no mês atual (com registros de horas)
