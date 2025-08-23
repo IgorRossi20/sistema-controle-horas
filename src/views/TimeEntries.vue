@@ -194,13 +194,13 @@
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body">
-            <form @submit.prevent="saveEntry" v-if="entryForm.value">
+            <form @submit.prevent="saveEntry" v-if="entryForm">
               <div class="mb-3">
                 <label for="entry-date" class="form-label">Data</label>
                 <input 
                   type="date" 
                   id="entry-date" 
-                  v-model="entryForm.value.date" 
+                  v-model="entryForm.date" 
                   class="form-control" 
                   required
                   :placeholder="formatDatePlaceholder()"
@@ -261,7 +261,7 @@
                   <input 
                     type="text" 
                     id="entry-start-time" 
-                    v-model="entryForm.value.startTime" 
+                    v-model="entryForm.startTime" 
                     class="form-control time-input" 
                     required
                     @input="formatTimeInput($event, 'startTime')"
@@ -277,7 +277,7 @@
                   <input 
                     type="text" 
                     id="entry-end-time" 
-                    v-model="entryForm.value.endTime" 
+                    v-model="entryForm.endTime" 
                     class="form-control time-input" 
                     required
                     @input="formatTimeInput($event, 'endTime')"
@@ -295,14 +295,14 @@
                 <div class="form-control-plaintext fw-bold text-primary">
                   {{ formatHoursToText(calculatedHours) }}
                 </div>
-                <input type="hidden" v-model="entryForm.value.hours" />
+                <input type="hidden" v-model="entryForm.hours" />
               </div>
               
               <div class="mb-3">
                 <label for="entry-description" class="form-label">Descrição</label>
                 <textarea 
                     id="entry-description" 
-                    v-model="entryForm.value.description" 
+                    v-model="entryForm.description" 
                     class="form-control" 
                     rows="3"
                 ></textarea>
