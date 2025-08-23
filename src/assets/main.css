@@ -572,6 +572,24 @@ h6, .h6 {
   transform: none;
 }
 
+/* Fullscreen Modal Override */
+.modal-fullscreen {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+}
+
+.modal-fullscreen .modal-content {
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+}
+
+.modal-fullscreen .modal-body {
+  overflow-y: auto;
+}
+
 /* Page Transitions */
 .page-enter-active,
 .page-leave-active {
