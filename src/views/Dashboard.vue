@@ -68,7 +68,7 @@
                 <div class="col-md-3 col-6 mb-2">
                   <div class="border-end">
                     <div class="h5 mb-0 text-info">{{ monthlyProgress.averageHoursPerDay }}</div>
-                    <small class="text-muted">Média/Dia Útil {{ currentMonthName }}</small>
+                    <small class="text-muted">Necessário/Dia Útil Restante</small>
                   </div>
                 </div>
                 <div class="col-md-3 col-6 mb-2">
@@ -121,7 +121,7 @@
         <div class="card modern-card chart-card">
           <div class="card-body">
             <div class="section-header">
-              <h5 class="card-title">Horas por Projeto</h5>
+              <h5 class="card-title">Horas por Atividade</h5>
               <div class="chart-info">
                 <i class="bi bi-bar-chart"></i>
               </div>
@@ -139,7 +139,7 @@
               </router-link>
             </div>
             <div v-else>
-              <p class="text-muted small mb-3">Debug: {{ (projectHours && projectHours.length) || 0 }} projetos com horas</p>
+              <p class="text-muted small mb-3">Debug: {{ (projectHours && projectHours.length) || 0 }} atividades com horas</p>
             </div>
             <!-- Canvas sempre presente no DOM -->
             <div v-show="!loading">
@@ -174,7 +174,7 @@
                 <thead>
                   <tr>
                     <th>Data</th>
-                    <th>Projeto</th>
+                    <th>Atividade</th>
                     <th>Horas</th>
                   </tr>
                 </thead>
@@ -210,7 +210,7 @@
 
               
               <router-link to="/projects" class="btn btn-outline-secondary">
-                <i class="bi bi-folder me-2"></i> Gerenciar Projetos
+                <i class="bi bi-folder me-2"></i> Gerenciar Atividades
               </router-link>
             </div>
           </div>
@@ -309,7 +309,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
           if (!dataLoaded.value.projects) {
             await loadProjectsData()
             dataLoaded.value.projects = true
-            // Renderizar gráfico após carregar dados dos projetos
+            // Renderizar gráfico após carregar dados das atividades
             nextTick(() => {
               setTimeout(() => {
                 renderChart()
@@ -334,12 +334,12 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     const loadProjectsData = async () => {
       if (!projects.value.length) {
         try {
-          console.log('📊 Carregando dados dos projetos...')
+          console.log('📊 Carregando dados das atividades...')
           const userId = userStore.userId
           projects.value = await projectsService.getProjects(userId)
-          console.log('✅ Projetos carregados:', projects.value.length)
+          console.log('✅ Atividades carregadas:', projects.value.length)
         } catch (err) {
-          console.error('❌ Erro ao carregar projetos:', err)
+          console.error('❌ Erro ao carregar atividades:', err)
         }
       }
     }
@@ -468,7 +468,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
       }
     })
     
-    // Obter projetos ativos (com horas registradas no mês atual)
+    // Obter atividades ativas (com horas registradas no mês atual)
     const activeProjects = computed(() => {
       try {
         if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0 ||
@@ -499,7 +499,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
       return workingDaysService.getMonthlyProgress(hoursWorked, currentDate, currentMonthEntries.value)
     })
     
-    // Calcular horas por projeto
+    // Calcular horas por atividade
     const projectHours = computed(() => {
       try {
         if (!currentMonthEntries.value || !Array.isArray(currentMonthEntries.value) || currentMonthEntries.value.length === 0 ||
@@ -535,14 +535,14 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
             const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
             return {
               projectId,
-              projectName: (project && project.name) ? project.name : 'Projeto Desconhecido',
+              projectName: (project && project.name) ? project.name : 'Atividade Desconhecida',
               hours: hours[projectId] || 0
             }
           } catch (error) {
-            console.warn('Erro ao mapear projeto:', projectId, error)
+            console.warn('Erro ao mapear atividade:', projectId, error)
             return {
               projectId,
-              projectName: 'Projeto Desconhecido',
+              projectName: 'Atividade Desconhecida',
               hours: hours[projectId] || 0
             }
           }
@@ -607,18 +607,18 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     // Formatar data
     const formatDate = formatDateBR
     
-    // Obter nome do projeto
+    // Obter nome da atividade
     const getProjectName = (projectId) => {
       try {
         if (!projectId || !projects.value || !Array.isArray(projects.value)) {
-          return 'Projeto Desconhecido'
+          return 'Atividade Desconhecida'
         }
         
         const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
-        return (project && project.name) ? project.name : 'Projeto Desconhecido'
+        return (project && project.name) ? project.name : 'Atividade Desconhecida'
       } catch (error) {
-        console.warn('Erro ao obter nome do projeto:', projectId, error)
-        return 'Projeto Desconhecido'
+        console.warn('Erro ao obter nome da atividade:', projectId, error)
+      return 'Atividade Desconhecida'
       }
     }
     
@@ -631,12 +631,12 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     const createTestData = async () => {
       console.log('🧪 Criando dados de teste...')
       
-      // Criar projeto de teste se não existir
+      // Criar atividade de teste se não existir
     if (!projects.value || !Array.isArray(projects.value) || projects.value.length === 0) {
       const testProject = {
         id: 'test-project-1',
-        name: 'Projeto Teste',
-        description: 'Projeto para testar o dashboard',
+        name: 'Atividade Teste',
+          description: 'Atividade para testar o dashboard',
         status: 'active',
         userId: userStore.userId,
         createdAt: new Date().toISOString()
@@ -649,7 +649,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
          projects.value = []
        }
        projects.value.push(testProject)
-       console.log('✅ Projeto de teste criado')
+       console.log('✅ Atividade de teste criada')
      }
      
      // Criar registros de tempo de teste se não existir
@@ -705,7 +705,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
         const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
         const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59)
         
-        // Carregar projetos e registros de tempo do mês atual
+        // Carregar atividades e registros de tempo do mês atual
         const [projectsData, timeEntriesData] = await Promise.all([
           projectsService.getProjects(userId),
           timeEntriesService.getTimeEntriesByPeriod(userId, firstDayOfMonth, lastDayOfMonth)
@@ -737,7 +737,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
       }
     }
     
-    // Renderizar gráfico de horas por projeto
+    // Renderizar gráfico de horas por atividade
     const renderChart = () => {
       try {
         console.log('🎨 renderChart chamada')
@@ -760,7 +760,7 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
         
         // Verificar se há dados
         if (!projectHours.value || !Array.isArray(projectHours.value) || projectHours.value.length === 0) {
-          console.log('❌ Nenhum dado de projeto encontrado')
+          console.log('❌ Nenhum dado de atividade encontrado')
           // Mostrar mensagem no canvas em vez de não renderizar nada
           showNoDataMessage()
           return

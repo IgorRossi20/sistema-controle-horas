@@ -54,9 +54,9 @@
           </div>
           
           <div class="col-md-6">
-            <label for="project" class="form-label">Projeto</label>
+            <label for="project" class="form-label">Atividade</label>
             <select id="project" v-model="filters.projectId" class="form-select">
-              <option value="">Todos os projetos</option>
+              <option value="">Todas as atividades</option>
               <option v-for="project in projects" :key="project.id" :value="project.id">
                 {{ project.name }}
               </option>
@@ -88,7 +88,7 @@
               <thead>
               <tr>
                 <th>Data</th>
-                <th>Projeto</th>
+                <th>Atividade</th>
                 <th>Horário</th>
                 <th>Horas</th>
                 <th>Descrição</th>
@@ -209,16 +209,8 @@
               </div>
               
               <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <label for="entry-project" class="form-label mb-0">Projeto</label>
-                  <button 
-                    type="button" 
-                    class="btn btn-outline-primary btn-sm" 
-                    @click="showProjectModal = true"
-                    title="Cadastrar novo projeto"
-                  >
-                    <i class="bi bi-plus-circle me-1"></i> Novo Projeto
-                  </button>
+                <div class="mb-2">
+                  <label for="entry-project" class="form-label mb-0">Atividade</label>
                 </div>
                 <div class="position-relative">
                   <input 
@@ -229,7 +221,7 @@
                     @blur="hideProjectDropdown"
                     @keydown="handleProjectKeydown"
                     class="form-control" 
-                    placeholder="Digite o nome do projeto ou clique para ver todos..."
+                    placeholder="Digite o nome da atividade ou clique para ver todas..."
                     autocomplete="off"
                     required
                   />
@@ -248,11 +240,11 @@
                       {{ project.name }}
                     </div>
                     <div v-if="filteredProjects.length === 0" class="dropdown-item text-muted">
-                      Nenhum projeto encontrado
+                      Nenhuma atividade encontrada
                     </div>
                   </div>
                 </div>
-                <small class="text-muted mt-1 d-block">{{ filteredProjects.length }} projeto(s) disponível(eis)</small>
+                <small class="text-muted mt-1 d-block">{{ filteredProjects.length }} atividade(s) disponível(eis)</small>
               </div>
               
               <div class="row mb-3">
@@ -346,24 +338,24 @@
     </div>
     <div class="modal-backdrop fade show" v-if="showDeleteModal"></div>
 
-    <!-- Modal de cadastro de projeto -->
+    <!-- Modal de cadastro de atividade -->
     <div class="modal fade" :class="{ 'show d-block': showProjectModal }" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content modern-modal">
           <div class="modal-header">
-            <h5 class="modal-title">Novo Projeto</h5>
+            <h5 class="modal-title">Nova Atividade</h5>
             <button type="button" class="btn-close" @click="closeProjectModal"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveProject">
               <div class="mb-3">
-                <label for="project-name" class="form-label">Nome do Projeto</label>
+                <label for="project-name" class="form-label">Nome da Atividade</label>
                 <input 
                   type="text" 
                   id="project-name" 
                   v-model="projectForm.name" 
                   class="form-control" 
-                  placeholder="Digite o nome do projeto"
+                  placeholder="Digite o nome da atividade"
                   required
                   maxlength="100"
                 />
@@ -376,7 +368,7 @@
                   v-model="projectForm.description" 
                   class="form-control" 
                   rows="3"
-                  placeholder="Descrição do projeto"
+                  placeholder="Descrição da atividade"
                   maxlength="500"
                 ></textarea>
               </div>
@@ -384,7 +376,7 @@
               <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary transition-all hover-scale" :disabled="projectFormLoading">
                   <span v-if="projectFormLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  Salvar Projeto
+                  Salvar Atividade
                 </button>
               </div>
             </form>
@@ -509,7 +501,7 @@ const currentPage = ref(1)
 const itemsPerPage = ref(20)
 const totalItems = ref(0)
 
-// Função de busca de projetos com debounce
+// Função de busca de atividades com debounce
 const debouncedProjectSearch = debounceSearch((searchText) => {
   // A busca real acontece no computed filteredProjects
   // Este debounce apenas controla quando a busca é ativada
@@ -517,7 +509,7 @@ const debouncedProjectSearch = debounceSearch((searchText) => {
   currentPage.value = 1 // Reset para primeira página ao buscar
 }, 200)
 
-// Debounce para filtros de data e projeto
+// Debounce para filtros de data e atividade
 const debouncedFilterUpdate = debounceFilter(() => {
   // Força recálculo dos filtros
   currentPage.value = 1
@@ -562,7 +554,7 @@ const resetForm = () => {
 const entryForm = ref(resetForm())
 const entryToDelete = ref(null)
 
-// Cache para projetos ordenados e memoização
+// Cache para atividades ordenadas e memoização
 let sortedProjectsCache = null
 let lastProjectsLength = 0
 
@@ -752,12 +744,12 @@ const allFilteredEntries = computed(() => {
     
     console.log('Entries após filtro de data:', result.length)
     
-    // Filtrar por projeto
+    // Filtrar por atividade
     if (filters.value.projectId) {
       const targetProjectId = filters.value.projectId
-      console.log('Filtrando por projeto:', targetProjectId)
+      console.log('Filtrando por atividade:', targetProjectId)
       result = result.filter(entry => entry.projectId === targetProjectId)
-      console.log('Entries após filtro de projeto:', result.length)
+      console.log('Entries após filtro de atividade:', result.length)
     }
     
     // Ordenar por data (mais recente primeiro) - criar nova array apenas se necessário
@@ -912,8 +904,8 @@ const loadData = async () => {
       return
     }
     
-    console.log('Carregando registros e projetos...')
-    // Carregar projetos e registros de tempo com otimizações
+    console.log('Carregando registros e atividades...')
+      // Carregar atividades e registros de tempo com otimizações
     const [projectsData, timeEntriesResponse] = await Promise.all([
       projectsService.getProjects(userId),
       timeEntriesService.getTimeEntries(userId)
@@ -922,7 +914,7 @@ const loadData = async () => {
     // Verificar se a resposta é do novo formato otimizado
     const timeEntriesData = timeEntriesResponse?.data || timeEntriesResponse
     
-    console.log('Dados carregados - Registros:', timeEntriesData?.length || 0, 'Projetos:', projectsData?.length || 0)
+    console.log('Dados carregados - Registros:', timeEntriesData?.length || 0, 'Atividades:', projectsData?.length || 0)
     console.log('Dados de registros recebidos:', timeEntriesData)
     
     // Validar dados antes de atribuir
@@ -1045,19 +1037,19 @@ const validateTimeInput = (event, field) => {
   }
 }
 
-// Função memoizada para buscar nome do projeto
+// Função memoizada para buscar nome da atividade
 const getProjectName = memoize(
   (projectId, projectsArray) => {
     if (!projectId) {
-      return 'Projeto Desconhecido'
+      return 'Atividade Desconhecida'
     }
     
     if (!projectsArray || !Array.isArray(projectsArray)) {
-      return 'Projeto Desconhecido'
+      return 'Atividade Desconhecida'
     }
     
     const project = projectsArray.find(p => p && p.id === projectId)
-    return project ? project.name : 'Projeto Desconhecido'
+    return project ? project.name : 'Atividade Desconhecida'
   },
   (projectId, projectsArray) => `${projectId}_${projectsArray?.length || 0}`
 )
@@ -1138,7 +1130,7 @@ const closeProjectModal = () => {
 
 const saveProject = async () => {
   if (!projectForm.name.trim()) {
-    alert('Por favor, digite o nome do projeto')
+    alert('Por favor, digite o nome da atividade')
     return
   }
 
@@ -1155,22 +1147,22 @@ const saveProject = async () => {
 
     const projectId = await projectsService.createProject(newProject)
     
-    // Adicionar o novo projeto à lista local
+    // Adicionar a nova atividade à lista local
     const createdProject = { id: projectId, ...newProject }
     projects.value.push(createdProject)
     
-    // Selecionar automaticamente o projeto recém-criado
+    // Selecionar automaticamente a atividade recém-criada
     entryForm.value.projectId = projectId
     projectSearchText.value = newProject.name
     
     closeProjectModal()
     
     // Mostrar mensagem de sucesso
-    alert('Projeto criado com sucesso!')
+    alert('Atividade criada com sucesso!')
     
   } catch (error) {
-    console.error('Erro ao criar projeto:', error)
-    alert('Erro ao criar projeto. Tente novamente.')
+    console.error('Erro ao criar atividade:', error)
+      alert('Erro ao criar atividade. Tente novamente.')
   } finally {
     projectFormLoading.value = false
   }
@@ -1219,7 +1211,7 @@ const editEntry = (entry) => {
     description: entry.description
   }
   
-  // Definir o nome do projeto no campo de busca
+  // Definir o nome da atividade no campo de busca
   const project = projects.value.find(p => p.id === entry.projectId)
   if (project) {
     projectSearchText.value = project.name

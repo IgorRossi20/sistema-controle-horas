@@ -328,9 +328,17 @@ function getMonthlyProgress(hoursWorked, currentDate = new Date(), timeEntries =
     11: 21  // Dezembro
   }
   
-  // Usar dias úteis fixos para o cálculo da média
-  const fixedWorkingDays = fixedWorkingDaysByMonth[month] || totalWorkingDays
-  const averageHoursPerWorkingDay = fixedWorkingDays > 0 ? targetHours / fixedWorkingDays : 0
+  // Calcular média necessária por dia útil restante para atingir a meta
+  const remainingWorkingDaysInMonth = getRemainingWorkingDays(currentDate)
+  let averageHoursPerWorkingDay = 0
+  
+  if (remainingWorkingDaysInMonth > 0 && remainingHours > 0) {
+    // Calcular quantas horas por dia são necessárias para atingir a meta
+    averageHoursPerWorkingDay = remainingHours / remainingWorkingDaysInMonth
+  } else if (remainingWorkingDaysInMonth === 0 || remainingHours <= 0) {
+    // Se não há dias restantes ou já atingiu a meta, mostrar 0
+    averageHoursPerWorkingDay = 0
+  }
   
   // Expectativa baseada no mínimo de 180h
   const expectedMinHours = (workedDaysUteis / totalWorkingDays) * MONTHLY_MIN
@@ -342,13 +350,13 @@ function getMonthlyProgress(hoursWorked, currentDate = new Date(), timeEntries =
     monthlyTarget: MONTHLY_TARGET,
     targetHours,
     hoursWorked: effectiveHoursWorked,
-    remainingHours,
+    remainingHours: Math.round(remainingHours * 100) / 100,
     progressPercentage: Math.round(progressPercentage * 100) / 100,
     minProgressPercentage: Math.round(minProgressPercentage * 100) / 100,
     totalWorkingDays,
     workedDays: actualWorkedDays, // Dias realmente trabalhados (com registros)
     remainingDays: remainingDaysInMonth, // Dias restantes do mês
-    averageHoursPerDay: Math.round(averageHoursPerWorkingDay * 100) / 100, // Média por dia útil
+    averageHoursPerDay: Math.round(averageHoursPerWorkingDay * 100) / 100, // Horas necessárias por dia útil restante
     expectedMinHours: Math.round(expectedMinHours * 100) / 100,
     expectedTargetHours: Math.round(expectedTargetHours * 100) / 100,
     isOnTrack,

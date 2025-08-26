@@ -3,13 +3,13 @@
     <div class="page-header mb-5">
       <div class="d-flex justify-content-between align-items-center header-container">
         <div class="header-info">
-          <h1 class="page-title">Projetos</h1>
-          <p class="page-subtitle">Gerencie seus projetos e clientes</p>
+          <h1 class="page-title">Atividades</h1>
+    <p class="page-subtitle">Gerencie suas atividades e clientes</p>
         </div>
         <div class="header-actions">
           <button class="btn btn-primary btn-modern hover-lift transition-all" @click="showAddModal = true">
             <i class="bi bi-plus-circle me-2"></i>
-            <span class="d-none d-sm-inline">Novo Projeto</span>
+            <span class="d-none d-sm-inline">Nova Atividade</span>
             <span class="d-sm-none">Novo</span>
           </button>
         </div>
@@ -39,7 +39,7 @@
       </div>
     </div>
     
-    <!-- Lista de projetos -->
+    <!-- Lista de atividades -->
     <div class="card modern-card animate-fade-in hover-lift transition-all">
       <div class="card-body">
         <div v-if="loading" class="text-center py-5">
@@ -49,9 +49,9 @@
         </div>
         
         <div v-else-if="(!filteredProjects || filteredProjects.length === 0)" class="text-center py-5">
-          <p class="text-muted mb-3">Nenhum projeto encontrado para os filtros selecionados.</p>
+          <p class="text-muted mb-3">Nenhuma atividade encontrada para os filtros selecionados.</p>
           <button class="btn btn-primary" @click="showAddModal = true">
-            Adicionar Projeto
+            Adicionar Atividade
           </button>
         </div>
         
@@ -92,7 +92,7 @@
                         class="btn btn-sm btn-outline-danger transition-all hover-scale" 
                         @click="confirmDelete(project)"
                         :disabled="hasTimeEntries(project.id)"
-                        :title="hasTimeEntries(project.id) ? 'Projeto possui horas registradas' : 'Excluir projeto'"
+                        :title="hasTimeEntries(project.id) ? 'Atividade possui horas registradas' : 'Excluir atividade'"
                       >
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-1">Excluir</span>
@@ -107,18 +107,18 @@
       </div>
     </div>
     
-    <!-- Modal para adicionar/editar projeto -->
+    <!-- Modal para adicionar/editar atividade -->
     <div class="modal fade" :class="{ 'show d-block': showAddModal }" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content modern-modal">
           <div class="modal-header">
-            <h5 class="modal-title">{{ isEditing ? 'Editar Projeto' : 'Novo Projeto' }}</h5>
+            <h5 class="modal-title">{{ isEditing ? 'Editar Atividade' : 'Nova Atividade' }}</h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveProject">
               <div class="mb-3">
-                <label for="project-name" class="form-label">Nome do Projeto</label>
+                <label for="project-name" class="form-label">Nome da Atividade</label>
                 <input 
                   type="text" 
                   id="project-name" 
@@ -187,7 +187,7 @@
             <button type="button" class="btn-close" @click="showDeleteModal = false"></button>
           </div>
           <div class="modal-body">
-            <p>Tem certeza que deseja excluir o projeto <strong>{{ projectToDelete?.name }}</strong>?</p>
+            <p>Tem certeza que deseja excluir a atividade <strong>{{ projectToDelete?.name }}</strong>?</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary transition-all hover-scale" @click="showDeleteModal = false">Cancelar</button>
@@ -258,7 +258,7 @@ const loadData = async () => {
   try {
     const userId = userStore.userId
     
-    // Carregar projetos e registros de tempo
+    // Carregar atividades e registros de tempo
     const [projectsData, timeEntriesData] = await Promise.all([
       projectsService.getProjects(userId),
       timeEntriesService.getTimeEntries(userId)
@@ -348,7 +348,7 @@ const saveProject = async () => {
     }
     
     if (isEditing.value && currentProjectId.value) {
-      // Atualizar projeto existente
+      // Atualizar atividade existente
       await projectsService.updateProject(currentProjectId.value, formData)
       
       // Atualizar na lista local
@@ -357,15 +357,15 @@ const saveProject = async () => {
         projects.value[index] = { id: currentProjectId.value, ...formData }
       }
     } else {
-      // Adicionar novo projeto
+      // Adicionar nova atividade
       const newProject = await projectsService.addProject(formData, userId)
       projects.value.push(newProject)
     }
     
     closeModal()
   } catch (error) {
-    console.error('Erro ao salvar projeto:', error)
-    alert('Ocorreu um erro ao salvar o projeto. Tente novamente.')
+    console.error('Erro ao salvar atividade:', error)
+        alert('Ocorreu um erro ao salvar a atividade. Tente novamente.')
   } finally {
     formLoading.value = false
   }
@@ -385,8 +385,8 @@ const deleteProject = async () => {
     showDeleteModal.value = false
     projectToDelete.value = null
   } catch (error) {
-    console.error('Erro ao excluir projeto:', error)
-    alert('Ocorreu um erro ao excluir o projeto. Tente novamente.')
+    console.error('Erro ao excluir atividade:', error)
+        alert('Ocorreu um erro ao excluir a atividade. Tente novamente.')
   } finally {
     formLoading.value = false
   }

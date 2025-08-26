@@ -22,7 +22,7 @@
               </li>
 
               <li class="nav-item">
-                <router-link class="nav-link" to="/projects">Projetos</router-link>
+                <router-link class="nav-link" to="/projects">Atividades</router-link>
               </li>
               <li class="nav-item">
                 <router-link class="nav-link" to="/reports">Relatórios</router-link>

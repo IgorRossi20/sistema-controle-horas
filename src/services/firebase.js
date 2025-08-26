@@ -76,9 +76,9 @@ const safeLogEvent = (analytics, eventName, eventParams) => {
   }
 }
 
-// Serviço para projetos
+// Serviço para atividades
 export const projectsService = {
-  // Adicionar um novo projeto
+  // Adicionar uma nova atividade
   async addProject(project, userId) {
     try {
       const projectData = {
@@ -89,7 +89,7 @@ export const projectsService = {
       
       const docRef = await addDoc(collection(db, 'projects'), projectData)
       
-      // Registra evento de criação de projeto
+      // Registra evento de criação de atividade
       safeLogEvent(analytics, 'create_item', {
         content_type: 'project',
         item_id: docRef.id
@@ -97,12 +97,12 @@ export const projectsService = {
       
       return { id: docRef.id, ...projectData }
     } catch (error) {
-      console.error('Erro ao adicionar projeto:', error)
+      console.error('Erro ao adicionar atividade:', error)
       throw error
     }
   },
 
-  // Buscar projetos do usuário com cache otimizado
+  // Buscar atividades do usuário com cache otimizado
   async getProjects(userId) {
     try {
       const cacheKey = generateCacheKey('projects', userId)
@@ -125,16 +125,16 @@ export const projectsService = {
         projects.push({ id: doc.id, ...doc.data() })
       })
       
-      // Cache projetos por 15 minutos (mudam menos frequentemente)
+      // Cache atividades por 15 minutos (mudam menos frequentemente)
       setCachedData(cacheKey, projects, 15 * 60 * 1000)
       return projects
     } catch (error) {
-      console.error('Erro ao buscar projetos:', error)
+      console.error('Erro ao buscar atividades:', error)
       throw error
     }
   },
 
-  // Atualizar projeto
+  // Atualizar atividade
   async updateProject(projectId, updates) {
     try {
       const projectRef = doc(db, 'projects', projectId)
@@ -143,7 +143,7 @@ export const projectsService = {
         updatedAt: serverTimestamp()
       })
       
-      // Invalidar cache de projetos
+      // Invalidar cache de atividades
       invalidateCache('projects')
       
       safeLogEvent(analytics, 'update_item', {
@@ -153,17 +153,17 @@ export const projectsService = {
       
       return true
     } catch (error) {
-      console.error('Erro ao atualizar projeto:', error)
+      console.error('Erro ao atualizar atividade:', error)
       throw error
     }
   },
 
-  // Deletar projeto
+  // Deletar atividade
   async deleteProject(projectId) {
     try {
       await deleteDoc(doc(db, 'projects', projectId))
       
-      // Invalidar cache de projetos
+      // Invalidar cache de atividades
       invalidateCache('projects')
       
       safeLogEvent(analytics, 'delete_item', {
@@ -173,7 +173,7 @@ export const projectsService = {
       
       return true
     } catch (error) {
-      console.error('Erro ao deletar projeto:', error)
+      console.error('Erro ao deletar atividade:', error)
       throw error
     }
   }

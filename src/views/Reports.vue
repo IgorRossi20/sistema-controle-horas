@@ -98,9 +98,9 @@
           </div>
           
           <div class="col-12 col-sm-6 col-lg-3">
-            <label for="project" class="form-label">Projeto</label>
+            <label for="project" class="form-label">Atividade</label>
             <select id="project" v-model="selectedProject" class="form-select">
-              <option value="">Todos os projetos</option>
+              <option value="">Todas as atividades</option>
               <option v-for="project in projects" :key="project.id" :value="project.id">
                 {{ project.name }}
               </option>
@@ -111,6 +111,7 @@
             <label for="reportType" class="form-label">Tipo de Relatório</label>
             <select id="reportType" v-model="selectedReportType" class="form-select">
               <option value="daily">Resumido por Dia</option>
+              <option value="detailed-daily">Detalhado por Dia</option>
             </select>
           </div>
         </div>
@@ -158,7 +159,7 @@
               </div>
               <div class="col-12 col-md-6 text-md-end">
                 <p class="mb-1"><strong>Total de Horas:</strong> {{ formatHoursToText(totalHours) }}</p>
-                <p class="mb-1"><strong>Total de Projetos:</strong> {{ (uniqueProjects && uniqueProjects.length) || 0 }}</p>
+                <p class="mb-1"><strong>Total de Atividades:</strong> {{ (uniqueProjects && uniqueProjects.length) || 0 }}</p>
               </div>
             </div>
           </div>
@@ -175,7 +176,7 @@
                 <table class="table table-sm table-hover">
                   <thead class="table-light">
                     <tr>
-                      <th>Projeto(s)</th>
+                      <th>Atividade(s)</th>
                       <th>Descrição das Atividades</th>
                       <th class="text-end d-none d-md-table-cell">Qtd. Registros</th>
                     </tr>
@@ -202,6 +203,51 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+          
+          <!-- Relatório Detalhado por Dia -->
+          <div v-else-if="selectedReportType === 'detailed-daily'">
+            <div v-for="(dayData, date) in displayData" :key="date" class="mb-5">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h4 mb-0 text-primary">📅 {{ date }}</h3>
+                <span class="badge bg-success rounded-pill fs-6">Total: {{ formatHoursToText(dayData.totalHours) }}</span>
+              </div>
+              
+              <!-- Atividades do dia -->
+              <div v-for="(projectData, projectId) in dayData.projects" :key="projectId" class="mb-4 ms-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h4 class="h6 mb-0">
+                    <span class="badge bg-info me-2">{{ getProjectName(projectId) }}</span>
+                  </h4>
+                  <span class="badge bg-primary rounded-pill">{{ formatHoursToText(projectData.totalHours) }}</span>
+                </div>
+                
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Descrição da Atividade</th>
+                        <th class="text-end">Horas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="entry in projectData.entries" :key="entry.id">
+                        <td>{{ entry.description }}</td>
+                        <td class="text-end">{{ formatHoursToText(entry.hours) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <hr class="my-4">
+            </div>
+            
+            <!-- Total Mensal -->
+            <div class="alert alert-info d-flex justify-content-between align-items-center">
+              <strong>📊 Total do Período: {{ formatReportPeriod() }}</strong>
+              <span class="badge bg-dark fs-5">{{ formatHoursToText(monthlyTotal) }}</span>
             </div>
           </div>
           
@@ -342,7 +388,7 @@ const filteredEntries = computed(() => {
   
   let result = [...reportData.value]
   
-  // Filtrar por projeto
+  // Filtrar por atividade
   if (selectedProject.value) {
     result = result.filter(entry => entry.projectId === selectedProject.value)
   }
@@ -373,9 +419,9 @@ const groupedEntries = computed(() => {
     grouped[entry.projectId].push(entry)
   })
   
-  // Ordenar entradas por data dentro de cada projeto
+  // Ordenar entradas por data dentro de cada atividade
   Object.keys(grouped).forEach(projectId => {
-    // Verificar se o array do projeto é válido
+    // Verificar se o array da atividade é válido
     if (!grouped[projectId] || !Array.isArray(grouped[projectId])) {
       return
     }
@@ -430,6 +476,23 @@ const uniqueProjects = computed(() => {
   return Array.from(projectIds)
 })
 
+// Computed property para total mensal (usado no relatório detalhado por dia)
+const monthlyTotal = computed(() => {
+  if (selectedReportType.value === 'detailed-daily') {
+    const data = displayData.value
+    let total = 0
+    
+    Object.keys(data).forEach(dateKey => {
+      if (data[dateKey] && typeof data[dateKey].totalHours === 'number') {
+        total += data[dateKey].totalHours
+      }
+    })
+    
+    return total.toFixed(2)
+  }
+  return totalHours.value
+})
+
 
 
 const displayData = computed(() => {
@@ -469,6 +532,48 @@ const displayData = computed(() => {
     })
     
     return dailyData
+  } else if (selectedReportType.value === 'detailed-daily') {
+    // Para relatório detalhado por dia, agrupar por data e depois por projeto
+    const detailedDailyData = {}
+    
+    // Verificar se filteredEntries é um array válido
+    if (!filteredEntries.value || !Array.isArray(filteredEntries.value)) {
+      return detailedDailyData
+    }
+    
+    filteredEntries.value.forEach(entry => {
+      // Verificar se entry é válido
+      if (!entry || typeof entry !== 'object' || !entry.date) {
+        return
+      }
+      const dateKey = formatDate(entry.date)
+      
+      if (!detailedDailyData[dateKey]) {
+        detailedDailyData[dateKey] = {
+          projects: {},
+          totalHours: 0
+        }
+      }
+      
+      // Agrupar por atividade dentro do dia
+      if (!detailedDailyData[dateKey].projects[entry.projectId]) {
+        detailedDailyData[dateKey].projects[entry.projectId] = {
+          entries: [],
+          totalHours: 0
+        }
+      }
+      
+      detailedDailyData[dateKey].projects[entry.projectId].entries.push(entry)
+      
+      // As horas já estão em formato decimal (ex: 1.50 = 1h30min)
+      const hours = parseFloat(entry.hours);
+      if (!isNaN(hours)) {
+        detailedDailyData[dateKey].projects[entry.projectId].totalHours += hours;
+        detailedDailyData[dateKey].totalHours += hours;
+      }
+    })
+    
+    return detailedDailyData
   } else {
     // Para relatório detalhado, usar o agrupamento existente
     return groupedEntries.value
@@ -480,7 +585,7 @@ const loadData = async () => {
   try {
     const userId = userStore.userId
     
-    // Carregar projetos
+    // Carregar atividades
     const projectsData = await projectsService.getProjects(userId)
     
     projects.value = projectsData
@@ -561,11 +666,11 @@ const formatHoursFromMinutes = (totalMinutes) => {
 const getProjectName = (projectId) => {
   // Verificar se projects é um array válido
   if (!projects.value || !Array.isArray(projects.value)) {
-    return 'Projeto Desconhecido'
+    return 'Atividade Desconhecida'
   }
   
   const project = projects.value.find(p => p && typeof p === 'object' && p.id === projectId)
-  return (project && project.name) ? project.name : 'Projeto Desconhecido'
+  return (project && project.name) ? project.name : 'Atividade Desconhecida'
 }
 
 
@@ -620,10 +725,22 @@ const exportToPDF = async () => {
       
       headers = [
         { key: 'data', label: 'Data' },
-        { key: 'projeto', label: 'Projeto(s)' },
+        { key: 'projeto', label: 'Atividade(s)' },
         { key: 'descricao', label: 'Descrição' },
         { key: 'horas', label: 'Total Horas' },
         { key: 'quantidade_registros', label: 'Qtd. Registros' }
+      ]
+    } else if (selectedReportType.value === 'detailed-daily') {
+      formattedData = exportService.formatDetailedDailyReport(
+        reportData.value,
+        validProjects
+      )
+      
+      headers = [
+        { key: 'data', label: 'Data' },
+        { key: 'projeto', label: 'Atividade' },
+        { key: 'descricao', label: 'Descrição' },
+        { key: 'horas', label: 'Horas' }
       ]
     } else {
       formattedData = exportService.formatMonthlyReport(
@@ -632,7 +749,7 @@ const exportToPDF = async () => {
       )
       
       headers = [
-        { key: 'projeto', label: 'Projeto' },
+        { key: 'projeto', label: 'Atividade' },
         { key: 'data', label: 'Data' },
         { key: 'descricao', label: 'Descrição' },
         { key: 'horas', label: 'Horas' }
@@ -640,12 +757,24 @@ const exportToPDF = async () => {
     }
     
     // Exportar para PDF
-    await exportService.exportToPDF(
-      formattedData,
-      reportTitle,
-      headers,
-      `relatorio-${formatReportPeriod().replace(/\s+/g, '-').toLowerCase()}.pdf`
-    )
+    if (selectedReportType.value === 'detailed-daily') {
+      // Usar função especializada para relatório detalhado por dia
+      await exportService.exportDetailedDailyToPDF(
+        formattedData,
+        reportTitle,
+        `relatorio-detalhado-${formatReportPeriod().replace(/\s+/g, '-').toLowerCase()}.pdf`,
+        reportData.value,
+        validProjects
+      )
+    } else {
+      // Usar função padrão para outros tipos de relatório
+      await exportService.exportToPDF(
+        formattedData,
+        reportTitle,
+        headers,
+        `relatorio-${formatReportPeriod().replace(/\s+/g, '-').toLowerCase()}.pdf`
+      )
+    }
   } catch (error) {
     console.error('Erro ao exportar para PDF:', error)
     alert('Ocorreu um erro ao exportar para PDF. Tente novamente.')
@@ -669,9 +798,14 @@ const exportToExcel = async () => {
     const validProjects = projects.value && Array.isArray(projects.value) ? projects.value : []
     
     // Formatar dados para o relatório baseado no tipo selecionado
-    const formattedData = selectedReportType.value === 'daily' 
-      ? exportService.formatDailyReport(reportData.value, validProjects)
-      : exportService.formatMonthlyReport(reportData.value, validProjects)
+    let formattedData
+    if (selectedReportType.value === 'daily') {
+      formattedData = exportService.formatDailyReport(reportData.value, validProjects)
+    } else if (selectedReportType.value === 'detailed-daily') {
+      formattedData = exportService.formatDetailedDailyReport(reportData.value, validProjects)
+    } else {
+      formattedData = exportService.formatMonthlyReport(reportData.value, validProjects)
+    }
     
     // Exportar para Excel
     await exportService.exportToExcel(
