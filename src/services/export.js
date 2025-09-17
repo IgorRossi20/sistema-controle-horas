@@ -220,8 +220,7 @@ export const exportService = {
             doc.setFont('helvetica', 'normal')
             doc.setTextColor(80, 80, 80)
             
-            // Bullet point
-            doc.text('-', 26, currentY + 3)
+            // Não adicionar bullet point '-' para evitar linhas com apenas '-' no relatório
             
             // Descrição da atividade
             const maxWidth = doc.internal.pageSize.getWidth() - 80
@@ -232,7 +231,7 @@ export const exportService = {
                 doc.addPage()
                 currentY = 20
               }
-              doc.text(line, 30, currentY + 3)
+              doc.text(line, 26, currentY + 3)
               if (lineIndex === 0) {
                 // Horas na primeira linha
                 doc.setFont('helvetica', 'bold')
@@ -249,12 +248,8 @@ export const exportService = {
             break
             
           case 'separador':
-            // Linha separadora entre dias
-            currentY += 5
-            doc.setLineWidth(0.5)
-            doc.setDrawColor(200, 200, 200)
-            doc.line(14, currentY, doc.internal.pageSize.getWidth() - 14, currentY)
-            currentY += 10
+            // Espaço entre dias sem linha separadora
+            currentY += 15
             break
         }
       })
@@ -558,14 +553,7 @@ export const exportService = {
         })
       })
       
-      // Adicionar linha separadora
-      reportData.push({
-        data: '-'.repeat(50),
-        atividade: '',
-        descricao: '',
-        horas: '',
-        tipo: 'separador'
-      })
+      // Não adicionar linha separadora para evitar linhas com apenas '-' no relatório
     })
     
     return reportData
