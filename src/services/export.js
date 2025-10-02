@@ -220,11 +220,16 @@ export const exportService = {
             doc.setFont('helvetica', 'normal')
             doc.setTextColor(80, 80, 80)
             
-            // Não adicionar bullet point '-' para evitar linhas com apenas '-' no relatório
+            // Montar texto: "Atividade - Descrição DAS HH:MM AS HH:MM"
+            const leftTextBase = `${item.atividade ? item.atividade + ' - ' : ''}${item.descricao || ''}`
+            const timeRange = (item.startTime && item.endTime) 
+              ? ` DAS ${item.startTime} AS ${item.endTime}` 
+              : ''
+            const fullLeftText = `${leftTextBase}${timeRange}`.trim()
             
-            // Descrição da atividade
+            // Quebrar linhas conforme largura disponível
             const maxWidth = doc.internal.pageSize.getWidth() - 80
-            const descricaoLines = doc.splitTextToSize(item.descricao || '', maxWidth)
+            const descricaoLines = doc.splitTextToSize(fullLeftText, maxWidth)
             
             descricaoLines.forEach((line, lineIndex) => {
               if (currentY > 250) {
@@ -545,14 +550,18 @@ export const exportService = {
         projectData.entries.forEach(entry => {
           reportData.push({
             data: '',
-            atividade: '',
+            // Incluir o nome da atividade na entrada para impressão detalhada
+            atividade: projectName,
             descricao: entry.description,
             horas: parseFloat(entry.hours).toFixed(2),
+            // Incluir intervalo de horário quando disponível
+            startTime: entry.startTime || '',
+            endTime: entry.endTime || '',
             tipo: 'entrada'
           })
         })
       })
-      
+
       // Não adicionar linha separadora para evitar linhas com apenas '-' no relatório
     })
     
