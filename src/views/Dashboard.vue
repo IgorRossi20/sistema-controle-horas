@@ -83,6 +83,12 @@
                     <small class="text-muted">Dias Restantes do Mês</small>
                   </div>
                 </div>
+                <div class="col-md-3 col-6 mb-2">
+                  <div>
+                    <div class="h5 mb-0 text-secondary">{{ monthlyProgress.remainingWorkingDays }}</div>
+                    <small class="text-muted">Dias Úteis Restantes</small>
+                  </div>
+                </div>
               </div>
               
               <!-- Alerta se necessário -->
@@ -353,6 +359,12 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     onMounted(async () => {
       try {
         console.log('🚀 Dashboard montado, carregando dados...')
+        // Pré-carregar feriados até 2030 para melhorar cálculo de dias úteis
+        try {
+          workingDaysService.preloadHolidaysUpTo2030()
+        } catch (e) {
+          console.warn('Não foi possível pré-carregar feriados:', e)
+        }
         
         // Garantir que as variáveis estejam inicializadas
         if (!Array.isArray(timeEntries.value)) {

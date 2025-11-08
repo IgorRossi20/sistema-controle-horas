@@ -51,6 +51,7 @@ const FIXED_HOLIDAYS = {
   '10-12': 'Nossa Senhora Aparecida',
   '11-02': 'Finados',
   '11-15': 'Proclamação da República',
+  '11-20': 'Dia da Consciência Negra',
   '12-25': 'Natal'
 }
 
@@ -332,11 +333,11 @@ function getMonthlyProgress(hoursWorked, currentDate = new Date(), timeEntries =
   const remainingWorkingDaysInMonth = getRemainingWorkingDays(currentDate)
   let averageHoursPerWorkingDay = 0
   
-  if (remainingWorkingDaysInMonth > 0 && remainingHours > 0) {
-    // Calcular quantas horas por dia são necessárias para atingir a meta
-    averageHoursPerWorkingDay = remainingHours / remainingWorkingDaysInMonth
-  } else if (remainingWorkingDaysInMonth === 0 || remainingHours <= 0) {
-    // Se não há dias restantes ou já atingiu a meta, mostrar 0
+  // Ajuste solicitado: calcular necessário/dia útil sempre com base nas 200 horas
+  const remainingHoursForTarget200 = Math.max(0, MONTHLY_TARGET - effectiveHoursWorked)
+  if (remainingWorkingDaysInMonth > 0 && remainingHoursForTarget200 > 0) {
+    averageHoursPerWorkingDay = remainingHoursForTarget200 / remainingWorkingDaysInMonth
+  } else {
     averageHoursPerWorkingDay = 0
   }
   
@@ -356,6 +357,7 @@ function getMonthlyProgress(hoursWorked, currentDate = new Date(), timeEntries =
     totalWorkingDays,
     workedDays: actualWorkedDays, // Dias realmente trabalhados (com registros)
     remainingDays: remainingDaysInMonth, // Dias restantes do mês
+    remainingWorkingDays: remainingWorkingDaysInMonth, // Dias úteis restantes (exclui feriados e fins de semana)
     averageHoursPerDay: Math.round(averageHoursPerWorkingDay * 100) / 100, // Horas necessárias por dia útil restante
     expectedMinHours: Math.round(expectedMinHours * 100) / 100,
     expectedTargetHours: Math.round(expectedTargetHours * 100) / 100,
@@ -397,5 +399,15 @@ export const workingDaysService = {
   getActualWorkedDaysInMonth,
   getRemainingDaysInMonth,
   getMonthlyProgress,
-  getHolidays
+  getHolidays,
+  /**
+   * Pré-carrega feriados no cache de memoização até 2030
+   */
+  preloadHolidaysUpTo2030() {
+    const start = new Date().getFullYear()
+    const end = 2030
+    for (let year = start; year <= end; year++) {
+      getHolidays(year)
+    }
+  }
 }
