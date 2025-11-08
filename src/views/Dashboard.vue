@@ -129,7 +129,27 @@
             <div class="section-header">
               <h5 class="card-title">Horas por Atividade</h5>
               <div class="chart-info">
-                <i class="bi bi-bar-chart"></i>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Tipos de gráfico">
+                  <button type="button" class="btn btn-outline-primary" :class="{ active: chartType === 'bar' }" @click="setChartType('bar')" title="Barras">
+                    <i class="bi bi-bar-chart"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" :class="{ active: chartType === 'hbar' }" @click="setChartType('hbar')" title="Barras Horizontais">
+                    <i class="bi bi-graph-up"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" :class="{ active: chartType === 'pie' }" @click="setChartType('pie')" title="Pizza">
+                    <i class="bi bi-pie-chart"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" :class="{ active: chartType === 'doughnut' }" @click="setChartType('doughnut')" title="Rosca">
+                    <i class="bi bi-circle-half"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" :class="{ active: chartType === 'polarArea' }" @click="setChartType('polarArea')" title="Polar">
+                    <i class="bi bi-record-circle"></i>
+                  </button>
+                </div>
+                <div class="form-check form-switch ms-3 align-self-center">
+                  <input class="form-check-input" type="checkbox" id="legendSwitch" v-model="showLegend" @change="onLegendToggle">
+                  <label class="form-check-label small" for="legendSwitch">Mostrar legenda</label>
+                </div>
               </div>
             </div>
             <div v-if="loading" class="text-center py-5">
@@ -253,6 +273,9 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     const loading = ref(true)
     const projectChart = ref(null)
     const chartInstance = ref(null)
+    const chartType = ref('bar')
+    const showLegend = ref(true)
+    const isRenderingChart = ref(false)
     
     // Lazy loading state
     const dataLoaded = ref({
@@ -403,6 +426,19 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
       if (typeof window !== 'undefined') {
         window.removeEventListener('scroll', handleScroll)
       }
+      // Destruir gráfico para evitar erros de contexto após desmontar
+      if (chartInstance.value) {
+        try {
+          if (typeof chartInstance.value.stop === 'function') {
+            chartInstance.value.stop()
+          }
+          chartInstance.value.destroy()
+        } catch (e) {
+          console.warn('⚠️ Erro ao destruir gráfico no unmount:', e)
+        }
+        chartInstance.value = null
+      }
+      isRenderingChart.value = false
     })
     
     // Obter o mês atual
@@ -750,7 +786,12 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
     }
     
     // Renderizar gráfico de horas por atividade
-    const renderChart = () => {
+    const renderChart = async () => {
+      if (isRenderingChart.value) {
+        console.log('⏳ renderChart ignorado: renderização em andamento')
+        return
+      }
+      isRenderingChart.value = true
       try {
         console.log('🎨 renderChart chamada')
         console.log('📊 projectChart.value:', projectChart.value)
@@ -782,6 +823,10 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
         if (chartInstance.value) {
           console.log('🗑️ Destruindo gráfico existente')
           try {
+            // Parar animações antes de destruir
+            if (typeof chartInstance.value.stop === 'function') {
+              chartInstance.value.stop()
+            }
             chartInstance.value.destroy()
           } catch (e) {
             console.warn('⚠️ Erro ao destruir gráfico:', e)
@@ -789,9 +834,9 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
           chartInstance.value = null
         }
         
-        const ctx = projectChart.value.getContext('2d')
+        const canvasEl = projectChart.value
+        const ctx = canvasEl.getContext('2d')
         console.log('🖼️ Context obtido:', !!ctx)
-        
         if (!ctx) {
           console.error('❌ Não foi possível obter o contexto 2D do canvas')
           return
@@ -818,53 +863,123 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
         console.log('🏷️ Labels:', labels)
         console.log('📊 Data:', data)
         
-        // Configuração simplificada do gráfico
-        const config = {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Horas',
-              data: data,
-              backgroundColor: '#0d6efd',
-              borderColor: '#0d6efd',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const value = context.parsed.y
-                    return `${context.dataset.label}: ${formatHoursToText(value)}`
-                  }
+        const COLORS = ['#0d6efd','#6f42c1','#198754','#dc3545','#fd7e14','#20c997','#ffc107','#0dcaf0','#6610f2','#6c757d','#8b5cf6','#14b8a6','#ef4444','#f59e0b','#3b82f6']
+
+        const buildChartConfig = (type, labels, data) => {
+          const commonPlugins = {
+            legend: { display: showLegend.value },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = typeof context.parsed === 'object' ? (context.parsed.y ?? context.parsed) : context.parsed
+                  const label = context.dataset?.label || 'Horas'
+                  return `${label}: ${formatHoursToText(val)}`
                 }
               }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return formatHoursToText(value)
+            }
+          }
+          
+          if (type === 'bar') {
+            return {
+              type: 'bar',
+              data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: '#0d6efd', borderColor: '#0d6efd', borderWidth: 1 }] },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: commonPlugins,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: { callback: (value) => formatHoursToText(value) }
                   }
                 }
               }
             }
           }
+          if (type === 'hbar') {
+            return {
+              type: 'bar',
+              data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: '#0d6efd', borderColor: '#0d6efd', borderWidth: 1 }] },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                animation: false,
+                plugins: commonPlugins,
+                scales: {
+                  x: {
+                    beginAtZero: true,
+                    ticks: { callback: (value) => formatHoursToText(value) }
+                  }
+                }
+              }
+            }
+          }
+          if (type === 'pie') {
+            return {
+              type: 'pie',
+              data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length]) }] },
+              options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                animation: false,
+                plugins: { 
+                  ...commonPlugins,
+                  legend: { display: showLegend.value }
+                }
+              }
+            }
+          }
+          if (type === 'doughnut') {
+            return {
+              type: 'doughnut',
+              data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length]) }] },
+              options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                animation: false,
+                plugins: { 
+                  ...commonPlugins,
+                  legend: { display: showLegend.value }
+                },
+                cutout: '60%'
+              }
+            }
+          }
+          if (type === 'polarArea') {
+            return {
+              type: 'polarArea',
+              data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length]) }] },
+              options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                animation: false,
+                plugins: { 
+                  ...commonPlugins,
+                  legend: { display: showLegend.value }
+                }
+              }
+            }
+          }
+          // padrão
+          return {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Horas', data, backgroundColor: '#0d6efd', borderColor: '#0d6efd', borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: commonPlugins }
+          }
         }
-        
+
+        const config = buildChartConfig(chartType.value, labels, data)
+
         console.log('⚙️ Configuração do gráfico:', config)
         console.log('📦 Chart constructor:', Chart)
         
-        chartInstance.value = new Chart(ctx, config)
-        
+        // Aguarda ciclo do DOM para garantir estabilidade após destroy
+        await nextTick()
+        // Preferir passar o elemento canvas ao Chart.js para evitar ctx nulo em animações
+        chartInstance.value = new Chart(canvasEl, config)
+
         console.log('✅ Gráfico criado:', !!chartInstance.value)
         
       } catch (error) {
@@ -874,7 +989,22 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
         // Mostrar mensagem de erro no canvas
         showErrorMessage(error.message)
         chartInstance.value = null
+      } finally {
+        isRenderingChart.value = false
       }
+    }
+
+    // Alterar tipo de gráfico
+    const setChartType = (type) => {
+      chartType.value = type
+      // Definir padrão da legenda por tipo
+      showLegend.value = !(['pie','doughnut','polarArea'].includes(type))
+      // Re-renderizar ao mudar tipo
+      nextTick(() => renderChart())
+    }
+
+    const onLegendToggle = () => {
+      renderChart()
     }
     
     // Função para carregar Chart.js como fallback
@@ -1021,6 +1151,10 @@ console.log('Dashboard - UserStore userId:', userStore.userId)
       getProjectName,
       viewEntry,
       projectChart,
+      chartType,
+      showLegend,
+      onLegendToggle,
+      setChartType,
       goToNewEntry,
       goToReports,
       goToProjects,

@@ -54,9 +54,12 @@ try {
   const firebaseApp = initializeApp(firebaseConfig)
   db = getFirestore(firebaseApp)
   
-  // Inicializar Analytics apenas se measurementId estiver disponível
-  if (firebaseConfig.measurementId) {
+  // Inicializar Analytics apenas em produção e com measurementId válido
+  const isProd = import.meta.env && import.meta.env.PROD
+  if (firebaseConfig.measurementId && typeof window !== 'undefined' && isProd) {
     analytics = getAnalytics(firebaseApp)
+  } else {
+    console.log('📊 Analytics desativado (modo desenvolvimento ou sem measurementId)')
   }
   
   console.log('✅ Firebase inicializado com sucesso')
